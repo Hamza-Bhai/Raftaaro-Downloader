@@ -17,6 +17,7 @@ describe('Store', () => {
     expect(s.partsPerFile).toBe(8)
     expect(s.maxConcurrent).toBe(3)
     expect(s.useChromeCookies).toBe(false)
+    expect(s.useExtensionLogin).toBe(true)
     expect(s.apiToken).toMatch(/^[0-9a-f]{32}$/)
     expect(s.folders.videos).toBe(join(dl, 'Raftaaro', 'Videos'))
     expect(s.folders.audio).toBe(join(dl, 'Raftaaro', 'Audio'))

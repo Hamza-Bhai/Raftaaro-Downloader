@@ -1,14 +1,16 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { timingSafeEqual } from 'node:crypto'
 import type { AddressInfo } from 'node:net'
+import type { BrowserCookie } from './video/cookies'
 
 export const LOCAL_API_PORT = 47821
-const MAX_BODY = 16 * 1024
+/** Large enough for a YouTube login (cookies) sent along with a link. */
+const MAX_BODY = 256 * 1024
 
 export interface LocalApiOptions {
   port: number
   token: string
-  onLink: (url: string, title?: string) => void
+  onLink: (url: string, title?: string, cookies?: BrowserCookie[]) => void
 }
 
 export interface LocalApi {
@@ -60,7 +62,7 @@ export function startLocalApi(opts: LocalApiOptions): Promise<LocalApi> {
     if (req.method === 'POST' && req.url === '/add') {
       const body = await readBody(req)
       if (body === null) return send(res, 413, { error: 'too large' })
-      let data: { url?: unknown; title?: unknown }
+      let data: { url?: unknown; title?: unknown; cookies?: unknown }
       try {
         data = JSON.parse(body) as typeof data
       } catch {
@@ -68,7 +70,8 @@ export function startLocalApi(opts: LocalApiOptions): Promise<LocalApi> {
       }
       const url = typeof data.url === 'string' ? data.url : ''
       if (!/^https?:\/\//i.test(url)) return send(res, 400, { error: 'bad url' })
-      opts.onLink(url, typeof data.title === 'string' ? data.title : undefined)
+      const cookies = Array.isArray(data.cookies) ? (data.cookies as BrowserCookie[]) : undefined
+      opts.onLink(url, typeof data.title === 'string' ? data.title : undefined, cookies)
       return send(res, 202, { ok: true })
     }
     send(res, 404, { error: 'not found' })

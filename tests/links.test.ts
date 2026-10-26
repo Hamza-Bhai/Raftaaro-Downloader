@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractFirstUrl, isDownloadableUrl, isVideoSiteUrl } from '../src/shared/links'
+import { extractFirstUrl, isDownloadableUrl, isVideoSiteUrl, isYouTubeUrl } from '../src/shared/links'
 
 describe('extractFirstUrl', () => {
   it('finds a link inside surrounding text', () => {
@@ -26,6 +26,15 @@ describe('isDownloadableUrl', () => {
     expect(isDownloadableUrl('ftp://x')).toBe(false)
     expect(isDownloadableUrl('javascript:alert(1)')).toBe(false)
     expect(isDownloadableUrl('')).toBe(false)
+  })
+})
+
+describe('isYouTubeUrl', () => {
+  it('matches YouTube hosts only', () => {
+    expect(isYouTubeUrl('https://youtu.be/x')).toBe(true)
+    expect(isYouTubeUrl('https://music.youtube.com/watch?v=x')).toBe(true)
+    expect(isYouTubeUrl('https://www.facebook.com/x')).toBe(false)
+    expect(isYouTubeUrl('https://notyoutube.com/x')).toBe(false)
   })
 })
 

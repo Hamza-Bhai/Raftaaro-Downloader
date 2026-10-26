@@ -39,7 +39,7 @@ if (args.includes('--progress-template')) {
 }
 
 if (url.includes('fail')) {
-  process.stderr.write("ERROR: [youtube] xyz: Sign in to confirm you're not a bot\n")
+  process.stderr.write("ERROR: [youtube] xyz: Private video. Sign in if you've been granted access to this video\n")
   process.exit(1)
 }
 const name = url.endsWith('/@chan') ? 'raw-channel.json' : url.includes('list=') ? 'raw-playlist.json' : 'raw-video.json'

@@ -34,10 +34,19 @@ export function extractFirstUrl(text: string): string | null {
   return parseHttpUrl(url) ? url : null
 }
 
-/** True when the URL belongs to a site handled by yt-dlp rather than a plain file download. */
-export function isVideoSiteUrl(url: string): boolean {
+function hostIs(url: string, hosts: string[]): boolean {
   const parsed = parseHttpUrl(url.trim())
   if (!parsed) return false
   const host = parsed.hostname.toLowerCase()
-  return VIDEO_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))
+  return hosts.some((h) => host === h || host.endsWith(`.${h}`))
+}
+
+/** YouTube links get extra care: slower requests and one download at a time. */
+export function isYouTubeUrl(url: string): boolean {
+  return hostIs(url, ['youtube.com', 'youtu.be'])
+}
+
+/** True when the URL belongs to a site handled by yt-dlp rather than a plain file download. */
+export function isVideoSiteUrl(url: string): boolean {
+  return hostIs(url, VIDEO_HOSTS)
 }

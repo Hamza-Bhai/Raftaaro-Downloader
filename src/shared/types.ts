@@ -32,6 +32,10 @@ export interface Job {
   error?: string
   choice?: VideoChoice
   createdAt: number
+  /** Automatic retries used after YouTube rate limiting. */
+  attempts?: number
+  /** When a rate-limited job may start again (epoch ms). */
+  retryAt?: number
 }
 
 export interface Settings {
@@ -40,6 +44,10 @@ export interface Settings {
   maxConcurrent: number
   useChromeCookies: boolean
   apiToken: string
+  /** Last time yt-dlp checked for a new version (epoch ms). */
+  lastYtDlpUpdate?: number
+  /** Use the YouTube login the Chrome extension sends along with links. */
+  useExtensionLogin: boolean
 }
 
 export interface QualityOption {

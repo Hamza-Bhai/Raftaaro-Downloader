@@ -6,8 +6,11 @@ import { DownloadQueue, type Runner } from './queue'
 import { HttpDownload } from './http/http-download'
 import { registerIpc } from './ipc'
 import { LOCAL_API_PORT, startLocalApi } from './local-api'
-import { YtDlpDownload } from './video/ytdlp'
-import { binDir, binPath } from './video/bins'
+import { YtDlpDownload, type YtDlpExec } from './video/ytdlp'
+import { toNetscapeCookies } from './video/cookies'
+import { writeFileSync } from 'node:fs'
+import { binDir, binPath, updateYtDlp } from './video/bins'
+import { shouldUpdateYtDlp } from './video/update-policy'
 import type { Job } from '../shared/types'
 import iconPath from '../../resources/icon.png?asset'
 
@@ -102,10 +105,15 @@ if (!app.requestSingleInstanceLock()) {
     })
 
     const store = new Store(app.getPath('userData'), app.getPath('downloads'))
+    const ytExec: YtDlpExec = {
+      exe: binPath('yt-dlp'),
+      nodePath: process.execPath,
+      cookieFile: join(app.getPath('userData'), 'youtube-cookies.txt')
+    }
     const makeRunner = (job: Job): Runner => {
       const settings = store.getSettings()
       if (job.kind === 'video') {
-        return new YtDlpDownload(job, settings, { exe: binPath('yt-dlp'), nodePath: process.execPath }, binDir())
+        return new YtDlpDownload(job, settings, ytExec, binDir())
       }
       return new HttpDownload({
         url: job.url,
@@ -114,16 +122,27 @@ if (!app.requestSingleInstanceLock()) {
         resumePath: job.savePath
       })
     }
+    // an old yt-dlp is the most common reason YouTube stops working or flags the network
+    if (shouldUpdateYtDlp(store.getSettings().lastYtDlpUpdate, Date.now())) {
+      updateYtDlp()
+        .then(() => store.saveSettings({ lastYtDlpUpdate: Date.now() }))
+        .catch((e: Error) => console.error(`yt-dlp update failed: ${e.message}`))
+    }
     queue = new DownloadQueue(store, makeRunner)
     queue.on('update', refreshTrayTooltip)
-    registerIpc({ queue, store, window: () => mainWindow })
+    registerIpc({ queue, store, window: () => mainWindow, ytExec })
 
     createWindow()
 
     startLocalApi({
-      port: LOCAL_API_PORT,
+      // RAFTAARO_API_PORT lets a second copy (development, tests) run next to the installed app
+      port: Number(process.env.RAFTAARO_API_PORT) || LOCAL_API_PORT,
       token: store.getSettings().apiToken,
-      onLink: (url) => {
+      onLink: (url, _title, cookies) => {
+        // keep the user's YouTube login (sent by the extension) so YouTube sees a signed-in user, not a bot
+        if (cookies?.length && store.getSettings().useExtensionLogin) {
+          writeFileSync(ytExec.cookieFile!, toNetscapeCookies(cookies))
+        }
         const win = showWindow()
         const deliver = (): void => win.webContents.send('link:incoming', url)
         if (win.webContents.isLoading()) win.webContents.once('did-finish-load', deliver)

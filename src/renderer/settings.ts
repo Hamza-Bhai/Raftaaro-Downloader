@@ -30,6 +30,13 @@ export async function renderSettings(root: HTMLElement): Promise<void> {
       <input type="number" id="sMax" min="1" max="10" value="${s.maxConcurrent}" />
     </div>
     <div class="setting">
+      <label class="label"><input type="checkbox" id="sExtLogin" ${s.useExtensionLogin ? 'checked' : ''} />
+        Use my YouTube login from the extension (recommended)</label>
+      <div class="hint">When you send a YouTube video from Chrome, the extension also gives Raftaaro your YouTube login.
+        YouTube then sees a signed-in viewer instead of a bot, which avoids "slow down" blocks. It stays on this
+        computer and is only used for YouTube.</div>
+    </div>
+    <div class="setting">
       <label class="label"><input type="checkbox" id="sCookies" ${s.useChromeCookies ? 'checked' : ''} />
         Use my Chrome login</label>
       <div class="hint">Needed for sign-in-only videos (Instagram, Facebook, age-restricted YouTube). Your login is only
@@ -70,6 +77,9 @@ export async function renderSettings(root: HTMLElement): Promise<void> {
   }
   numberField('sParts', 'partsPerFile')
   numberField('sMax', 'maxConcurrent')
+  root.querySelector<HTMLInputElement>('#sExtLogin')!.addEventListener('change', (e) => {
+    void save({ useExtensionLogin: (e.target as HTMLInputElement).checked })
+  })
   root.querySelector<HTMLInputElement>('#sCookies')!.addEventListener('change', (e) => {
     void save({ useChromeCookies: (e.target as HTMLInputElement).checked })
   })

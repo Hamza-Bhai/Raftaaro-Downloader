@@ -3,17 +3,39 @@
   "name": "Raftaaro",
   "version": "1.0.0",
   "description": "Send videos and files from YouTube and other sites to the Raftaaro download manager in one click.",
-  "permissions": ["contextMenus", "storage"],
-  "host_permissions": ["http://127.0.0.1:47821/*"],
-  "background": { "service_worker": "background.js" },
+  "permissions": [
+    "contextMenus",
+    "storage",
+    "cookies"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:47821/*",
+    "*://*.youtube.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*"],
-      "js": ["youtube.js"],
-      "css": ["youtube.css"],
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "youtube.js"
+      ],
+      "css": [
+        "youtube.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "action": { "default_popup": "popup.html", "default_title": "Raftaaro" },
-  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Raftaaro"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
 }

@@ -3,11 +3,11 @@ import { startLocalApi, type LocalApi } from '../src/main/local-api'
 
 const TOKEN = 'a'.repeat(32)
 let api: LocalApi | null = null
-let calls: { url: string; title?: string }[] = []
+let calls: { url: string; title?: string; cookies?: unknown[] }[] = []
 
 async function start(): Promise<string> {
   calls = []
-  api = await startLocalApi({ port: 0, token: TOKEN, onLink: (url, title) => calls.push({ url, title }) })
+  api = await startLocalApi({ port: 0, token: TOKEN, onLink: (url, title, cookies) => calls.push(cookies ? { url, title, cookies } : { url, title }) })
   return `http://127.0.0.1:${api.port}`
 }
 
@@ -44,6 +44,14 @@ describe('local API', () => {
     expect(calls).toEqual([{ url: 'https://youtu.be/x', title: 'X' }])
   })
 
+  it('passes along the YouTube login the extension sends', async () => {
+    const base = await start()
+    const cookies = Array.from({ length: 80 }, (_, i) => ({ name: `c${i}`, value: 'v'.repeat(500), domain: '.youtube.com' }))
+    const r = await post(base, { url: 'https://youtu.be/x', title: 'X', cookies })
+    expect(r.status).toBe(202)
+    expect(calls[0].cookies).toHaveLength(80)
+  })
+
   it('rejects a wrong token without calling onLink', async () => {
     const base = await start()
     expect((await post(base, { url: 'https://youtu.be/x' }, 'b'.repeat(32))).status).toBe(401)
@@ -59,7 +67,7 @@ describe('local API', () => {
 
   it('rejects oversized bodies', async () => {
     const base = await start()
-    const r = await post(base, { url: 'https://x.com/' + 'a'.repeat(20 * 1024) })
+    const r = await post(base, { url: 'https://x.com/' + 'a'.repeat(300 * 1024) })
     expect(r.status).toBe(413)
     expect(calls).toEqual([])
   })

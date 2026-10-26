@@ -1,9 +1,10 @@
 import { EventEmitter } from 'node:events'
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
-import { statSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Job, PlaylistInfo, Settings, VideoInfo, YtFormat } from '../../shared/types'
 import { buildFormatSelector } from './formats'
+import { isYouTubeUrl } from '../../shared/links'
 
 /** How to launch yt-dlp: the executable plus arguments that go before ours (tests use node + a stub). */
 export interface YtDlpExec {
@@ -11,6 +12,8 @@ export interface YtDlpExec {
   preArgs?: string[]
   /** A Node-compatible executable yt-dlp may use as its JavaScript runtime (YouTube needs one). */
   nodePath?: string
+  /** Netscape cookie file with the YouTube login sent by the Chrome extension. */
+  cookieFile?: string
 }
 
 export interface YtProgress {
@@ -66,10 +69,18 @@ const COOKIE_ERROR = /cookie database|Failed to decrypt with DPAPI|could not fin
 const COOKIE_MESSAGE =
   'Could not read your Chrome login (Chrome keeps it locked). Turn off "Use my Chrome login" in Settings, or fully close Chrome and retry.'
 
+/** YouTube's answer when one network sends too many requests; the queue backs off and retries. */
+export const RATE_LIMIT_MESSAGE = 'YouTube asked us to slow down. Raftaaro will retry automatically.'
+const RATE_LIMIT_ERROR = /HTTP Error 429|Too Many Requests|not a bot|rate.?limit/i
+
+/** Pauses between YouTube requests and downloads so the network does not look like a bot. */
+const YOUTUBE_PACING = ['--sleep-requests', '1', '--sleep-interval', '3', '--max-sleep-interval', '8']
+
 export function classifyYtDlpError(stderr: string): string {
   if (COOKIE_ERROR.test(stderr)) return COOKIE_MESSAGE
+  if (RATE_LIMIT_ERROR.test(stderr) && !/private video|login required/i.test(stderr)) return RATE_LIMIT_MESSAGE
   if (/sign in|login required|private video|log in/i.test(stderr)) {
-    return 'Sign-in required — turn on "Use my Chrome login" in Settings'
+    return 'Sign-in required — sign in to the site in Chrome, then send the link with the Raftaaro extension'
   }
   if (/HTTP Error 403|Unable to extract|nsig|Requested format is not available/i.test(stderr)) {
     return 'yt-dlp is out of date — update it in Settings'
@@ -85,10 +96,15 @@ function ytEnv(): NodeJS.ProcessEnv {
   return { ...process.env, PYTHONIOENCODING: 'utf-8', ELECTRON_RUN_AS_NODE: '1' }
 }
 
-function commonArgs(settings: Settings, nodePath?: string): string[] {
+type ExtraArgs = Pick<YtDlpExec, 'nodePath' | 'cookieFile'>
+
+function commonArgs(settings: Settings, url: string, extra: ExtraArgs = {}): string[] {
   const args = ['--encoding', 'utf-8', '--no-warnings']
-  if (nodePath) args.push('--js-runtimes', `node:${nodePath}`)
+  if (extra.nodePath) args.push('--js-runtimes', `node:${extra.nodePath}`)
   if (settings.useChromeCookies) args.push('--cookies-from-browser', 'chrome')
+  else if (settings.useExtensionLogin && extra.cookieFile && isYouTubeUrl(url) && existsSync(extra.cookieFile)) {
+    args.push('--cookies', extra.cookieFile)
+  }
   return args
 }
 
@@ -144,7 +160,7 @@ function entryUrl(e: Raw): string {
 
 /** Ask yt-dlp what a link is: one video (with formats) or a playlist/channel (with entries). */
 export async function probe(url: string, settings: Settings, exec: YtDlpExec): Promise<VideoInfo | PlaylistInfo> {
-  const args = ['-J', '--flat-playlist', ...commonArgs(settings, exec.nodePath)]
+  const args = ['-J', '--flat-playlist', ...commonArgs(settings, url, exec)]
   if (singleVideo(url)) args.push('--no-playlist')
   let raw: Raw
   try {
@@ -185,13 +201,14 @@ export function buildDownloadArgs(
   job: Pick<Job, 'url' | 'savePath' | 'choice'>,
   settings: Settings,
   ffmpegDir: string,
-  nodePath?: string
+  extra: ExtraArgs = {}
 ): string[] {
   const choice = job.choice ?? { media: 'video', height: 'best' }
   const qualityTag = choice.media === 'video' && choice.height !== 'best' ? ` ${choice.height}p` : ''
   return [
     ...buildFormatSelector(choice),
-    ...commonArgs(settings, nodePath),
+    ...commonArgs(settings, job.url, extra),
+    ...(isYouTubeUrl(job.url) ? YOUTUBE_PACING : []),
     '--ffmpeg-location',
     ffmpegDir,
     '-o',
@@ -249,7 +266,7 @@ export class YtDlpDownload extends EventEmitter {
     this.base = 0
     this.current = null
     return new Promise((resolve) => {
-      const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, settings, this.ffmpegDir, this.exec.nodePath)]
+      const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, settings, this.ffmpegDir, this.exec)]
       const child = spawn(this.exec.exe, args, { windowsHide: true, env: ytEnv() })
       this.child = child
       let stderr = ''

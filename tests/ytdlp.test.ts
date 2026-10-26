@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { mkdtempSync, readFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { classifyYtDlpError, parseProgress, probe, buildDownloadArgs, YtDlpDownload } from '../src/main/video/ytdlp'
+import { classifyYtDlpError, parseProgress, probe, buildDownloadArgs, YtDlpDownload, RATE_LIMIT_MESSAGE } from '../src/main/video/ytdlp'
 import type { Settings } from '../src/shared/types'
 
 const settings: Settings = {
@@ -10,6 +10,7 @@ const settings: Settings = {
   partsPerFile: 8,
   maxConcurrent: 3,
   useChromeCookies: false,
+  useExtensionLogin: false,
   apiToken: 'x'
 }
 const fake = { exe: process.execPath, preArgs: [join(__dirname, 'fixtures', 'fake-ytdlp.mjs')] }
@@ -38,8 +39,7 @@ describe('parseProgress', () => {
 
 describe('classifyYtDlpError', () => {
   it('asks for login on bot checks, private and login-required content', () => {
-    const login = 'Sign-in required — turn on "Use my Chrome login" in Settings'
-    expect(classifyYtDlpError("ERROR: [youtube] a: Sign in to confirm you're not a bot")).toBe(login)
+    const login = 'Sign-in required — sign in to the site in Chrome, then send the link with the Raftaaro extension'
     expect(classifyYtDlpError('ERROR: [youtube] a: Private video. Sign in if you have been granted access')).toBe(login)
     expect(
       classifyYtDlpError('ERROR: [Instagram] a: Requested content is not available, rate-limit reached or login required')
@@ -50,6 +50,15 @@ describe('classifyYtDlpError', () => {
     expect(classifyYtDlpError('ERROR: unable to download video data: HTTP Error 403: Forbidden')).toBe(upd)
     expect(classifyYtDlpError('ERROR: [youtube] a: Unable to extract initial player response')).toBe(upd)
   })
+  it('recognises YouTube rate limiting', () => {
+    expect(classifyYtDlpError("ERROR: [youtube] a: Sign in to confirm you're not a bot. Use --cookies-from-browser")).toBe(
+      RATE_LIMIT_MESSAGE
+    )
+    expect(classifyYtDlpError('ERROR: unable to download webpage: HTTP Error 429: Too Many Requests')).toBe(
+      RATE_LIMIT_MESSAGE
+    )
+  })
+
   it('explains a Chrome login that cannot be read', () => {
     const msg = classifyYtDlpError(
       'ERROR: Could not copy Chrome cookie database. See  https://github.com/yt-dlp/yt-dlp/issues/7271  for more info'
@@ -275,7 +284,49 @@ describe('YtDlpDownload already downloaded', () => {
   })
 })
 
+describe('YouTube login from the extension', () => {
+  const cookieFile = join(mkdtempSync(join(tmpdir(), 'raftaaro-ck-')), 'youtube-cookies.txt')
+  writeFileSync(cookieFile, '# Netscape HTTP Cookie File\n')
+  const on = { ...settings, useExtensionLogin: true }
+  const job = { url: 'https://www.youtube.com/watch?v=x', savePath: 'C:\\v' }
+  const cookieArg = (args: string[]): string | undefined =>
+    args.includes('--cookies') ? args[args.indexOf('--cookies') + 1] : undefined
+
+  it('uses the saved login for YouTube downloads', () => {
+    expect(cookieArg(buildDownloadArgs(job, on, 'C:\\bin', { cookieFile }))).toBe(cookieFile)
+  })
+  it('does not use it when the setting is off, for other sites, or when no login was saved', () => {
+    expect(cookieArg(buildDownloadArgs(job, { ...on, useExtensionLogin: false }, 'C:\\bin', { cookieFile }))).toBeUndefined()
+    expect(
+      cookieArg(buildDownloadArgs({ ...job, url: 'https://www.facebook.com/watch?v=1' }, on, 'C:\\bin', { cookieFile }))
+    ).toBeUndefined()
+    expect(cookieArg(buildDownloadArgs(job, on, 'C:\\bin', { cookieFile: cookieFile + '.missing' }))).toBeUndefined()
+  })
+  it('lets "Use my Chrome login" take precedence', () => {
+    const args = buildDownloadArgs(job, { ...on, useChromeCookies: true }, 'C:\\bin', { cookieFile })
+    expect(cookieArg(args)).toBeUndefined()
+    expect(args).toContain('--cookies-from-browser')
+  })
+  it('uses the saved login when looking a video up', async () => {
+    const log = join(mkdtempSync(join(tmpdir(), 'raftaaro-yt-')), 'args.log')
+    process.env.FAKE_YTDLP_LOG = log
+    try {
+      await probe(job.url, on, { ...fake, cookieFile })
+      expect(cookieArg(JSON.parse(readFileSync(log, 'utf8').trim()) as string[])).toBe(cookieFile)
+    } finally {
+      delete process.env.FAKE_YTDLP_LOG
+    }
+  })
+})
+
 describe('buildDownloadArgs', () => {
+  it('paces requests to YouTube only', () => {
+    const yt = buildDownloadArgs({ url: 'https://www.youtube.com/watch?v=x', savePath: 'C:\\v' }, settings, 'C:\\bin')
+    expect(yt.join(' ')).toContain('--sleep-requests 1 --sleep-interval 3 --max-sleep-interval 8')
+    const fb = buildDownloadArgs({ url: 'https://www.facebook.com/watch?v=1', savePath: 'C:\\v' }, settings, 'C:\\bin')
+    expect(fb).not.toContain('--sleep-requests')
+  })
+
   it('keeps best-quality and audio names plain', () => {
     const best = buildDownloadArgs({ url: 'u', savePath: 'C:\\v', choice: { media: 'video', height: 'best' } }, settings, 'C:\\bin')
     expect(best[best.indexOf('-o') + 1]).toBe('C:\\v\\%(title).170B [%(id)s].%(ext)s')

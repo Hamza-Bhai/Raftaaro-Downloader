@@ -6,6 +6,27 @@ async function token() {
   return token || ''
 }
 
+function isYouTube(url) {
+  try {
+    const h = new URL(url).hostname
+    return h === 'youtu.be' || h === 'youtube.com' || h.endsWith('.youtube.com')
+  } catch {
+    return false
+  }
+}
+
+/** The user's YouTube login, so YouTube sees a signed-in person instead of a bot. Stays on this computer. */
+async function youtubeCookies() {
+  try {
+    const list = await chrome.cookies.getAll({ domain: 'youtube.com' })
+    return list.map(({ domain, hostOnly, path, secure, session, expirationDate, name, value }) => ({
+      domain, hostOnly, path, secure, session, expirationDate, name, value
+    }))
+  } catch {
+    return undefined
+  }
+}
+
 /** POST a link to the app. Resolves { ok: true } or { error: string }. */
 async function sendToApp(url, title) {
   const t = await token()
@@ -14,7 +35,7 @@ async function sendToApp(url, title) {
     const res = await fetch(`${API}/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Raftaaro-Token': t },
-      body: JSON.stringify({ url, title })
+      body: JSON.stringify({ url, title, cookies: isYouTube(url) ? await youtubeCookies() : undefined })
     })
     if (res.status === 202) return { ok: true }
     if (res.status === 401) return { error: 'Wrong token — copy it again from the app Settings.' }

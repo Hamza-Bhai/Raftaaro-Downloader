@@ -4,8 +4,8 @@ import { existsSync, statSync } from 'node:fs'
 import type { AddPlaylistInput, AddVideoInput, Job, MediaType, PlaylistInfo, Settings, VideoInfo } from '../shared/types'
 import { extractFirstUrl } from '../shared/links'
 import { playlistFolder } from './util/filename'
-import { probe } from './video/ytdlp'
-import { binPath, updateYtDlp } from './video/bins'
+import { probe, type YtDlpExec } from './video/ytdlp'
+import { updateYtDlp } from './video/bins'
 import { buildQualityOptions } from './video/formats'
 import type { DownloadQueue } from './queue'
 import type { Store } from './store'
@@ -14,6 +14,8 @@ export interface IpcDeps {
   queue: DownloadQueue
   store: Store
   window: () => BrowserWindow | null
+  /** How to run yt-dlp (bundled exe, JS runtime, saved YouTube login). */
+  ytExec: YtDlpExec
 }
 
 const clamp = (n: number, min: number, max: number): number => Math.min(max, Math.max(min, Math.round(Number(n) || min)))
@@ -61,7 +63,7 @@ export function registerIpc(deps: IpcDeps): void {
 
   ipcMain.handle('video:probe', async (_e, url: string): Promise<VideoInfo | PlaylistInfo | { error: string }> => {
     try {
-      return await probe(url, deps.store.getSettings(), { exe: binPath('yt-dlp'), nodePath: process.execPath })
+      return await probe(url, deps.store.getSettings(), deps.ytExec)
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) }
     }
@@ -88,11 +90,14 @@ export function registerIpc(deps: IpcDeps): void {
     if (s.partsPerFile !== undefined) clean.partsPerFile = clamp(s.partsPerFile, 1, 16)
     if (s.maxConcurrent !== undefined) clean.maxConcurrent = clamp(s.maxConcurrent, 1, 10)
     if (s.useChromeCookies !== undefined) clean.useChromeCookies = !!s.useChromeCookies
+    if (s.useExtensionLogin !== undefined) clean.useExtensionLogin = !!s.useExtensionLogin
     return deps.store.saveSettings(clean) // apiToken is never changed from the UI
   })
   ipcMain.handle('ytdlp:update', async () => {
     try {
-      return { version: await updateYtDlp() }
+      const version = await updateYtDlp()
+      deps.store.saveSettings({ lastYtDlpUpdate: Date.now() })
+      return { version }
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) }
     }

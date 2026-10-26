@@ -22,6 +22,7 @@ export class Store {
       partsPerFile: 8,
       maxConcurrent: 3,
       useChromeCookies: false,
+      useExtensionLogin: true,
       apiToken: randomBytes(16).toString('hex')
     }
     const saved = this.read<Partial<Settings>>('settings.json') ?? {}

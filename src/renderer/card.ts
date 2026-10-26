@@ -20,6 +20,10 @@ function statusLine(job: Job): string {
   const pct = job.totalBytes ? Math.floor((job.receivedBytes / job.totalBytes) * 100) : null
   switch (job.status) {
     case 'queued':
+      if (job.retryAt && job.retryAt > Date.now()) {
+        const at = new Date(job.retryAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        return `⏳ YouTube asked us to slow down — retrying at ${at}`
+      }
       return 'Waiting…'
     case 'probing':
       return 'Getting info…'

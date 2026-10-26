@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { EventEmitter } from 'node:events'
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { Store } from '../src/main/store'
 import { DownloadQueue, type Runner } from '../src/main/queue'
 import type { Job } from '../src/shared/types'
+import { RATE_LIMIT_MESSAGE } from '../src/main/video/ytdlp'
 
 class FakeRunner extends EventEmitter implements Runner {
   started = 0
@@ -122,6 +123,54 @@ describe('DownloadQueue', () => {
     expect(jobs.slice(0, 3).every((j) => runners.get(j.id)!.paused === 1)).toBe(true)
     // nothing new starts while pausing everything, and queued jobs stay queued for next time
     expect(queue.list().map((j) => j.status)).toEqual(['paused', 'paused', 'paused', 'queued'])
+  })
+
+  describe('YouTube', () => {
+    const yt = (n: number): Parameters<DownloadQueue['add']>[0] => ({
+      kind: 'video',
+      url: `https://www.youtube.com/watch?v=${n}`,
+      title: `v${n}`,
+      savePath: 'C:\\v',
+      totalBytes: null
+    })
+    afterEach(() => vi.useRealTimers())
+
+    it('runs one YouTube download at a time while other downloads continue', () => {
+      const { queue } = setup()
+      queue.add(yt(1))
+      queue.add(yt(2))
+      queue.add(input(3))
+      const status = queue.list().map((j) => `${j.title}:${j.status}`)
+      expect(status).toEqual(['v1:downloading', 'v2:queued', '3.zip:downloading'])
+    })
+
+    it('backs off for 10 minutes after a rate limit and then retries by itself', () => {
+      vi.useFakeTimers()
+      const { queue, runners } = setup()
+      const a = queue.add(yt(1))
+      const b = queue.add(yt(2))
+      runners.get(a.id)!.emit('error', new Error(RATE_LIMIT_MESSAGE))
+      let jobs = queue.list()
+      expect(jobs[0].status).toBe('queued')
+      expect(jobs[0].retryAt).toBe(Date.now() + 10 * 60 * 1000)
+      expect(jobs[1].status).toBe('queued') // nothing else hits YouTube during the cooldown
+      expect(runners.has(b.id)).toBe(false)
+      vi.advanceTimersByTime(10 * 60 * 1000 + 500)
+      jobs = queue.list()
+      expect(jobs[0].status).toBe('downloading')
+      expect(jobs[1].status).toBe('queued')
+    })
+
+    it('gives up after two automatic retries', () => {
+      vi.useFakeTimers()
+      const { queue, runners } = setup()
+      const a = queue.add(yt(1))
+      for (let i = 0; i < 3; i++) {
+        runners.get(a.id)!.emit('error', new Error(RATE_LIMIT_MESSAGE))
+        vi.advanceTimersByTime(10 * 60 * 1000 + 500)
+      }
+      expect(queue.list()[0].status).toBe('error')
+    })
   })
 
   it('persists jobs to the store', () => {
