@@ -1,9 +1,11 @@
-import { BrowserWindow, dialog, ipcMain, shell, type OpenDialogOptions } from 'electron'
+import { BrowserWindow, clipboard, dialog, ipcMain, shell, type OpenDialogOptions } from 'electron'
 import { dirname } from 'node:path'
 import { existsSync, statSync } from 'node:fs'
-import type { AddVideoInput, Job, MediaType, PlaylistInfo, VideoInfo } from '../shared/types'
+import type { AddPlaylistInput, AddVideoInput, Job, MediaType, PlaylistInfo, Settings, VideoInfo } from '../shared/types'
+import { extractFirstUrl } from '../shared/links'
+import { playlistFolder } from './util/filename'
 import { probe } from './video/ytdlp'
-import { binPath } from './video/bins'
+import { binPath, updateYtDlp } from './video/bins'
 import { buildQualityOptions } from './video/formats'
 import type { DownloadQueue } from './queue'
 import type { Store } from './store'
@@ -13,6 +15,8 @@ export interface IpcDeps {
   store: Store
   window: () => BrowserWindow | null
 }
+
+const clamp = (n: number, min: number, max: number): number => Math.min(max, Math.max(min, Math.round(Number(n) || min)))
 
 function titleFromUrl(url: string): string {
   try {
@@ -57,7 +61,7 @@ export function registerIpc(deps: IpcDeps): void {
 
   ipcMain.handle('video:probe', async (_e, url: string): Promise<VideoInfo | PlaylistInfo | { error: string }> => {
     try {
-      return await probe(url, deps.store.getSettings(), { exe: binPath('yt-dlp') })
+      return await probe(url, deps.store.getSettings(), { exe: binPath('yt-dlp'), nodePath: process.execPath })
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) }
     }
@@ -70,7 +74,36 @@ export function registerIpc(deps: IpcDeps): void {
     const r = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
     return r.canceled ? null : r.filePaths[0]
   })
+  ipcMain.handle('video:addPlaylist', (_e, p: AddPlaylistInput) => {
+    const folders = deps.store.getSettings().folders
+    const folder = playlistFolder(p.choice.media === 'audio' ? folders.audio : folders.videos, p.title)
+    return p.entries.map((e) =>
+      addVideoJob(deps, { url: e.url, title: e.title, thumbnail: null, choice: p.choice, folder, estBytes: null })
+    )
+  })
   ipcMain.handle('settings:get', () => deps.store.getSettings())
+  ipcMain.handle('settings:save', (_e, s: Partial<Settings>) => {
+    const clean: Partial<Settings> = {}
+    if (s.folders) clean.folders = { ...deps.store.getSettings().folders, ...s.folders }
+    if (s.partsPerFile !== undefined) clean.partsPerFile = clamp(s.partsPerFile, 1, 16)
+    if (s.maxConcurrent !== undefined) clean.maxConcurrent = clamp(s.maxConcurrent, 1, 10)
+    if (s.useChromeCookies !== undefined) clean.useChromeCookies = !!s.useChromeCookies
+    return deps.store.saveSettings(clean) // apiToken is never changed from the UI
+  })
+  ipcMain.handle('ytdlp:update', async () => {
+    try {
+      return { version: await updateYtDlp() }
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) }
+    }
+  })
+  let lastOffered: string | null = null
+  ipcMain.handle('clipboard:link', async () => {
+    const url = extractFirstUrl(await clipboard.readText())
+    if (!url || url === lastOffered) return null
+    lastOffered = url
+    return url
+  })
   ipcMain.handle('jobs:list', () => queue.list())
   ipcMain.handle('jobs:addFile', (_e, url: string) => addFileJob(deps, url))
   ipcMain.handle('jobs:pause', (_e, id: string) => queue.pause(id))

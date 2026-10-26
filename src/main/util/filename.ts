@@ -16,6 +16,11 @@ export function sanitizeFileName(name: string): string {
   return out || 'download'
 }
 
+/** Folder for a playlist's videos: a subfolder named after the playlist. */
+export function playlistFolder(base: string, title: string): string {
+  return join(base, sanitizeFileName(title))
+}
+
 /** Path inside `dir` for `fileName` that does not exist yet: "a.mp4", "a (1).mp4", ... */
 export function uniquePath(dir: string, fileName: string): string {
   const ext = extname(fileName)

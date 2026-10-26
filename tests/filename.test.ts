@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { sanitizeFileName, uniquePath } from '../src/main/util/filename'
+import { playlistFolder, sanitizeFileName, uniquePath } from '../src/main/util/filename'
 
 describe('sanitizeFileName', () => {
   it('replaces Windows-illegal characters', () => {
@@ -21,6 +21,12 @@ describe('sanitizeFileName', () => {
   })
   it('limits length to 200 characters', () => {
     expect(sanitizeFileName('x'.repeat(300)).length).toBeLessThanOrEqual(200)
+  })
+})
+
+describe('playlistFolder', () => {
+  it('puts a playlist in a sanitized subfolder', () => {
+    expect(playlistFolder('C:\\v', 'My: list?')).toBe(join('C:\\v', 'My_ list_'))
   })
 })
 

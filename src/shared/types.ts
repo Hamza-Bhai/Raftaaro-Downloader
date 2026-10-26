@@ -86,3 +86,9 @@ export interface AddVideoInput {
   folder?: string
   estBytes: number | null
 }
+
+export interface AddPlaylistInput {
+  title: string
+  entries: { url: string; title: string }[]
+  choice: VideoChoice
+}

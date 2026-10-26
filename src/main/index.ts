@@ -52,7 +52,9 @@ app.whenReady().then(() => {
   const store = new Store(app.getPath('userData'), app.getPath('downloads'))
   const makeRunner = (job: Job): Runner => {
     const settings = store.getSettings()
-    if (job.kind === 'video') return new YtDlpDownload(job, settings, { exe: binPath('yt-dlp') }, binDir())
+    if (job.kind === 'video') {
+      return new YtDlpDownload(job, settings, { exe: binPath('yt-dlp'), nodePath: process.execPath }, binDir())
+    }
     return new HttpDownload({
       url: job.url,
       dir: settings.folders.files,

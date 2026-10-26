@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import type { AddVideoInput, Job, MediaType, PlaylistInfo, QualityOption, Settings, VideoInfo } from '../shared/types'
+import type { AddPlaylistInput, AddVideoInput, Job, MediaType, PlaylistInfo, QualityOption, Settings, VideoInfo } from '../shared/types'
 
 function subscribe<T>(channel: string, cb: (payload: T) => void): () => void {
   const listener = (_e: IpcRendererEvent, payload: T): void => cb(payload)
@@ -21,7 +21,11 @@ const idm = {
     ipcRenderer.invoke('video:qualityOptions', info, media),
   addVideo: (v: AddVideoInput): Promise<Job> => ipcRenderer.invoke('video:add', v),
   pickFolder: (current?: string): Promise<string | null> => ipcRenderer.invoke('dialog:pickFolder', current),
+  addPlaylist: (p: AddPlaylistInput): Promise<Job[]> => ipcRenderer.invoke('video:addPlaylist', p),
   getSettings: (): Promise<Settings> => ipcRenderer.invoke('settings:get'),
+  saveSettings: (s: Partial<Settings>): Promise<Settings> => ipcRenderer.invoke('settings:save', s),
+  updateYtDlp: (): Promise<{ version: string } | { error: string }> => ipcRenderer.invoke('ytdlp:update'),
+  readClipboardLink: (): Promise<string | null> => ipcRenderer.invoke('clipboard:link'),
   onUpdate: (cb: (job: Job) => void): (() => void) => subscribe('jobs:update', cb),
   onRemoved: (cb: (id: string) => void): (() => void) => subscribe('jobs:removed', cb)
 }

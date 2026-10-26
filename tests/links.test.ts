@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { isDownloadableUrl, isVideoSiteUrl } from '../src/shared/links'
+import { extractFirstUrl, isDownloadableUrl, isVideoSiteUrl } from '../src/shared/links'
+
+describe('extractFirstUrl', () => {
+  it('finds a link inside surrounding text', () => {
+    expect(extractFirstUrl('dekho https://youtu.be/x yeh')).toBe('https://youtu.be/x')
+  })
+  it('strips trailing punctuation', () => {
+    expect(extractFirstUrl('link: https://x.com/a.zip).')).toBe('https://x.com/a.zip')
+  })
+  it('returns null without a link', () => {
+    expect(extractFirstUrl('koi link nahi')).toBeNull()
+    expect(extractFirstUrl('')).toBeNull()
+  })
+})
 
 describe('isDownloadableUrl', () => {
   it('accepts a trimmed http(s) url', () => {

@@ -26,6 +26,14 @@ export function isDownloadableUrl(text: string): boolean {
   return t !== '' && !/\s/.test(t) && parseHttpUrl(t) !== null
 }
 
+/** First http(s) link found in free text (e.g. the clipboard), without trailing punctuation. */
+export function extractFirstUrl(text: string): string | null {
+  const m = /https?:\/\/[^\s<>"']+/i.exec(text)
+  if (!m) return null
+  const url = m[0].replace(/[).,;:!?\]]+$/, '')
+  return parseHttpUrl(url) ? url : null
+}
+
 /** True when the URL belongs to a site handled by yt-dlp rather than a plain file download. */
 export function isVideoSiteUrl(url: string): boolean {
   const parsed = parseHttpUrl(url.trim())

@@ -9,6 +9,8 @@ import { buildFormatSelector } from './formats'
 export interface YtDlpExec {
   exe: string
   preArgs?: string[]
+  /** A Node-compatible executable yt-dlp may use as its JavaScript runtime (YouTube needs one). */
+  nodePath?: string
 }
 
 export interface YtProgress {
@@ -60,8 +62,14 @@ export function classifyYtDlpError(stderr: string): string {
   return last ? last.replace(/^ERROR:\s*/, '') : 'Download nakam ho gaya'
 }
 
-function commonArgs(settings: Settings): string[] {
+/** Electron's executable acts as plain Node when yt-dlp runs it as its JS runtime. */
+function ytEnv(): NodeJS.ProcessEnv {
+  return { ...process.env, PYTHONIOENCODING: 'utf-8', ELECTRON_RUN_AS_NODE: '1' }
+}
+
+function commonArgs(settings: Settings, nodePath?: string): string[] {
   const args = ['--encoding', 'utf-8', '--no-warnings']
+  if (nodePath) args.push('--js-runtimes', `node:${nodePath}`)
   if (settings.useChromeCookies) args.push('--cookies-from-browser', 'chrome')
   return args
 }
@@ -80,7 +88,7 @@ function runJson(exec: YtDlpExec, args: string[]): Promise<Record<string, unknow
     execFile(
       exec.exe,
       [...(exec.preArgs ?? []), ...args],
-      { windowsHide: true, maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000 },
+      { windowsHide: true, maxBuffer: 64 * 1024 * 1024, encoding: 'utf8', timeout: 120000, env: ytEnv() },
       (err, stdout, stderr) => {
         if (err) return reject(new Error(classifyYtDlpError(stderr || err.message)))
         try {
@@ -118,7 +126,7 @@ function entryUrl(e: Raw): string {
 
 /** Ask yt-dlp what a link is: one video (with formats) or a playlist/channel (with entries). */
 export async function probe(url: string, settings: Settings, exec: YtDlpExec): Promise<VideoInfo | PlaylistInfo> {
-  const args = ['-J', '--flat-playlist', ...commonArgs(settings)]
+  const args = ['-J', '--flat-playlist', ...commonArgs(settings, exec.nodePath)]
   if (singleVideo(url)) args.push('--no-playlist')
   const raw = await runJson(exec, [...args, url])
   if (raw._type === 'playlist') {
@@ -149,12 +157,13 @@ export async function probe(url: string, settings: Settings, exec: YtDlpExec): P
 export function buildDownloadArgs(
   job: Pick<Job, 'url' | 'savePath' | 'choice'>,
   settings: Settings,
-  ffmpegDir: string
+  ffmpegDir: string,
+  nodePath?: string
 ): string[] {
   const choice = job.choice ?? { media: 'video', height: 'best' }
   return [
     ...buildFormatSelector(choice),
-    ...commonArgs(settings),
+    ...commonArgs(settings, nodePath),
     '--ffmpeg-location',
     ffmpegDir,
     '-o',
@@ -193,8 +202,8 @@ export class YtDlpDownload extends EventEmitter {
   start(): Promise<void> {
     this.paused = false
     return new Promise((resolve) => {
-      const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, this.settings, this.ffmpegDir)]
-      const child = spawn(this.exec.exe, args, { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } })
+      const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, this.settings, this.ffmpegDir, this.exec.nodePath)]
+      const child = spawn(this.exec.exe, args, { windowsHide: true, env: ytEnv() })
       this.child = child
       let stderr = ''
       let finalPath: string | null = null

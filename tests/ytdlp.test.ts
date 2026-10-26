@@ -108,6 +108,18 @@ describe('probe', () => {
     }
     await expect(probe('https://www.youtube.com/watch?v=fail', settings, fake)).rejects.toThrow(/Login chahiye/)
   })
+
+  it('gives yt-dlp a JavaScript runtime when one is configured', async () => {
+    const log = join(mkdtempSync(join(tmpdir(), 'idm-yt-')), 'args.log')
+    process.env.FAKE_YTDLP_LOG = log
+    try {
+      await probe('https://www.youtube.com/watch?v=abc', settings, { ...fake, nodePath: 'C:\\app\\IDM.exe' })
+      const args = JSON.parse(readFileSync(log, 'utf8').trim()) as string[]
+      expect(args[args.indexOf('--js-runtimes') + 1]).toBe('node:C:\\app\\IDM.exe')
+    } finally {
+      delete process.env.FAKE_YTDLP_LOG
+    }
+  })
 })
 
 describe('YtDlpDownload', () => {

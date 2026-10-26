@@ -4,6 +4,7 @@ import { renderCard, updateCard, type CardHandlers } from './card'
 import { esc, openDialog, setBody } from './dialog'
 import { showQualityDialog } from './quality-dialog'
 import { showPlaylistDialog } from './playlist-dialog'
+import { renderSettings } from './settings'
 
 type View = 'all' | 'videos' | 'audio' | 'done' | 'settings'
 
@@ -118,6 +119,26 @@ form.addEventListener('submit', async (e) => {
 document.querySelectorAll<HTMLButtonElement>('.nav').forEach((b) =>
   b.addEventListener('click', () => setView(b.dataset.view as View))
 )
+
+document.addEventListener('idm:view', (e) => {
+  if ((e as CustomEvent<View>).detail === 'settings') void renderSettings(settingsEl)
+})
+
+/** When the window gets focus and the clipboard holds a new link, offer it once. */
+const banner = document.getElementById('banner')!
+window.addEventListener('focus', async () => {
+  const url = await window.idm.readClipboardLink()
+  if (!url) return
+  banner.innerHTML = `<span>📋 Link mila:</span><span class="url"></span>
+    <button class="primary" id="bGo">Download</button><button class="ghost" id="bNo">✕</button>`
+  banner.querySelector('.url')!.textContent = url
+  banner.hidden = false
+  banner.querySelector('#bGo')!.addEventListener('click', () => {
+    banner.hidden = true
+    void startDownload(url)
+  })
+  banner.querySelector('#bNo')!.addEventListener('click', () => (banner.hidden = true))
+})
 
 window.idm.onUpdate(upsert)
 window.idm.onRemoved(drop)
