@@ -175,6 +175,18 @@ describe('HttpDownload', () => {
     }
   })
 
+  it('keeps two simultaneous downloads of the same url apart', async () => {
+    reset()
+    const dir = tmp()
+    const [a, b] = await Promise.all([
+      run(new HttpDownload({ url: `${base}/file.bin`, dir, parts: 4 })),
+      run(new HttpDownload({ url: `${base}/file.bin`, dir, parts: 4 }))
+    ])
+    expect(a).not.toBe(b)
+    expect(sha(readFileSync(a))).toBe(sha(data))
+    expect(sha(readFileSync(b))).toBe(sha(data))
+  })
+
   it('emits error on 404 without creating the final file', async () => {
     reset()
     const dir = tmp()

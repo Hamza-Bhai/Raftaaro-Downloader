@@ -46,6 +46,8 @@ interface Probe {
 }
 
 const MAX_REDIRECTS = 10
+/** Final paths owned by a running download in this process, so two downloads never share parts. */
+const claimed = new Set<string>()
 const PROGRESS_MS = 250
 const SPEED_WINDOW_MS = 3000
 
@@ -117,6 +119,7 @@ export class HttpDownload extends EventEmitter {
       if (this.paused) return
       this.total = probe.total
       this.finalPath = this.pickFinalPath(probe.fileName)
+      claimed.add(this.finalPath)
       this.emit('path', this.finalPath)
       const stateDir = `${this.finalPath}.idmpart`
       const ranges = probe.ranges && probe.total ? splitRanges(probe.total, this.opts.parts) : null
@@ -137,8 +140,10 @@ export class HttpDownload extends EventEmitter {
       if (this.paused) return
       await this.join(stateDir, plan ? plan.length : 1)
       this.emitProgress(true)
+      claimed.delete(this.finalPath)
       this.emit('done', this.finalPath)
     } catch (e) {
+      claimed.delete(this.finalPath)
       if (this.paused) return
       this.stopRequests()
       this.emit('error', e instanceof Error ? e : new Error(String(e)))
@@ -148,6 +153,7 @@ export class HttpDownload extends EventEmitter {
   pause(): void {
     this.paused = true
     this.stopRequests()
+    claimed.delete(this.finalPath)
   }
 
   private stopRequests(): void {
@@ -173,15 +179,17 @@ export class HttpDownload extends EventEmitter {
   }
 
   private pickFinalPath(fileName: string): string {
-    if (this.opts.resumePath && existsSync(`${this.opts.resumePath}.idmpart`)) return this.opts.resumePath
+    const free = (p: string): boolean => !claimed.has(p)
+    const resume = this.opts.resumePath
+    if (resume && free(resume) && existsSync(`${resume}.idmpart`)) return resume
     const preferred = join(this.opts.dir, fileName)
     const meta = this.readMeta(`${preferred}.idmpart`)
-    if (meta && meta.url === this.opts.url && !existsSync(preferred)) return preferred
+    if (meta && meta.url === this.opts.url && !existsSync(preferred) && free(preferred)) return preferred
     mkdirSync(this.opts.dir, { recursive: true })
     // a name is free only if neither the file nor another download's part folder uses it
     for (let probe = fileName; ; ) {
       const candidate = uniquePath(this.opts.dir, probe)
-      if (!existsSync(`${candidate}.idmpart`)) return candidate
+      if (!existsSync(`${candidate}.idmpart`) && free(candidate)) return candidate
       probe = `_${probe}`
     }
   }

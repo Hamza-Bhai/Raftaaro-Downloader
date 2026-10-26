@@ -11,6 +11,12 @@ const url = args[args.length - 1]
 
 if (args.includes('--progress-template')) {
   const out = process.env.FAKE_YTDLP_OUT
+  if (process.env.FAKE_YTDLP_EXISTING) {
+    // yt-dlp found the file from an earlier run: no progress and (in some versions) no after_move print
+    writeFileSync(out, Buffer.alloc(10))
+    process.stdout.write(`[download] ${out} has already been downloaded\n`)
+    process.exit(0)
+  }
   const lines = [
     '[download] Destination: v.f1.mp4',
     'IDMP 500 1000 NA 100 5',

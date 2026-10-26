@@ -189,7 +189,51 @@ describe('YtDlpDownload', () => {
   })
 })
 
+describe('YtDlpDownload already downloaded', () => {
+  it('finishes with the existing file when yt-dlp skips the download', async () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'idm-ytd-')), 'v.mp4')
+    process.env.FAKE_YTDLP_OUT = out
+    process.env.FAKE_YTDLP_EXISTING = '1'
+    const job = {
+      id: 'j',
+      kind: 'video' as const,
+      url: 'https://youtu.be/x',
+      title: 'x',
+      savePath: dirname(out),
+      status: 'queued' as const,
+      totalBytes: null,
+      receivedBytes: 0,
+      speedBps: 0,
+      etaSec: null,
+      createdAt: 0
+    }
+    const d = new YtDlpDownload(job, settings, fake, 'C:\\bin')
+    const done = new Promise<string>((resolve, reject) => {
+      d.on('done', resolve)
+      d.on('error', reject)
+    })
+    try {
+      await d.start()
+      expect(await done).toBe(out)
+    } finally {
+      delete process.env.FAKE_YTDLP_OUT
+      delete process.env.FAKE_YTDLP_EXISTING
+    }
+  })
+})
+
 describe('buildDownloadArgs', () => {
+  it('keeps best-quality and audio names plain', () => {
+    const best = buildDownloadArgs({ url: 'u', savePath: 'C:\\v', choice: { media: 'video', height: 'best' } }, settings, 'C:\\bin')
+    expect(best[best.indexOf('-o') + 1]).toBe('C:\\v\\%(title).170B [%(id)s].%(ext)s')
+    const mp3 = buildDownloadArgs(
+      { url: 'u', savePath: 'C:\\a', choice: { media: 'audio', height: 'best', audioFormat: 'mp3' } },
+      settings,
+      'C:\\bin'
+    )
+    expect(mp3[mp3.indexOf('-o') + 1]).toBe('C:\\a\\%(title).170B [%(id)s].%(ext)s')
+  })
+
   it('builds a full command for a video choice', () => {
     const args = buildDownloadArgs(
       { url: 'https://youtu.be/x', savePath: 'C:\\v', choice: { media: 'video', height: 1080 } },
@@ -198,7 +242,8 @@ describe('buildDownloadArgs', () => {
     )
     expect(args).toContain('--ffmpeg-location')
     expect(args[args.indexOf('--ffmpeg-location') + 1]).toBe('C:\\bin')
-    expect(args[args.indexOf('-o') + 1]).toBe('C:\\v\\%(title).180B [%(id)s].%(ext)s')
+    // the chosen height is part of the name so a later download in another quality is not skipped as "already downloaded"
+    expect(args[args.indexOf('-o') + 1]).toBe('C:\\v\\%(title).170B [%(id)s] 1080p.%(ext)s')
     expect(args).toContain('--no-playlist')
     expect(args).toContain('--continue')
     // --print implies --quiet, which would hide progress and [Merger] lines

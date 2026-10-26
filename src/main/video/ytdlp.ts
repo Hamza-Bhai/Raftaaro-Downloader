@@ -30,6 +30,15 @@ const num = (s: string | undefined): number | null => {
   return Number.isFinite(n) ? Math.round(n) : null
 }
 
+/** The output file a yt-dlp status line refers to, if any. */
+function pathFromLine(line: string): string | null {
+  const m =
+    /^\[download\] (.+) has already been downloaded/.exec(line) ??
+    /^\[Merger\] Merging formats into "(.+)"$/.exec(line) ??
+    /^\[ExtractAudio\] Destination: (.+)$/.exec(line)
+  return m ? m[1].trim() : null
+}
+
 function fileSize(path: string): number | null {
   try {
     return statSync(path).size
@@ -161,13 +170,14 @@ export function buildDownloadArgs(
   nodePath?: string
 ): string[] {
   const choice = job.choice ?? { media: 'video', height: 'best' }
+  const qualityTag = choice.media === 'video' && choice.height !== 'best' ? ` ${choice.height}p` : ''
   return [
     ...buildFormatSelector(choice),
     ...commonArgs(settings, nodePath),
     '--ffmpeg-location',
     ffmpegDir,
     '-o',
-    join(job.savePath, '%(title).180B [%(id)s].%(ext)s'),
+    join(job.savePath, `%(title).170B [%(id)s]${qualityTag}.%(ext)s`),
     '--newline',
     '--progress-template',
     PROGRESS_TEMPLATE,
@@ -207,6 +217,8 @@ export class YtDlpDownload extends EventEmitter {
       this.child = child
       let stderr = ''
       let finalPath: string | null = null
+      // fallback when yt-dlp skips the after_move print, e.g. for an already downloaded file
+      let seenPath: string | null = null
       let buf = ''
       child.stdout.setEncoding('utf8')
       child.stderr.setEncoding('utf8')
@@ -217,7 +229,10 @@ export class YtDlpDownload extends EventEmitter {
           const line = buf.slice(0, i)
           buf = buf.slice(i + (buf[i] === '\r' ? 2 : 1))
           if (line.startsWith(FILE_MARK)) finalPath = line.slice(FILE_MARK.length).trim()
-          else this.onLine(line)
+          else {
+            seenPath = pathFromLine(line) ?? seenPath
+            this.onLine(line)
+          }
         }
       })
       child.stderr.on('data', (chunk: string) => (stderr += chunk))
@@ -228,10 +243,11 @@ export class YtDlpDownload extends EventEmitter {
       child.on('close', (code) => {
         this.child = null
         if (this.paused) return resolve()
-        if (code === 0 && finalPath) {
-          const size = fileSize(finalPath)
+        const path = finalPath ?? (seenPath && fileSize(seenPath) !== null ? seenPath : null)
+        if (code === 0 && path) {
+          const size = fileSize(path)
           if (size !== null) this.emit('progress', { received: size, total: size, speedBps: 0 })
-          this.emit('done', finalPath)
+          this.emit('done', path)
         } else this.emit('error', new Error(classifyYtDlpError(stderr)))
         resolve()
       })
