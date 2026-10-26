@@ -117,6 +117,7 @@ export class HttpDownload extends EventEmitter {
       if (this.paused) return
       this.total = probe.total
       this.finalPath = this.pickFinalPath(probe.fileName)
+      this.emit('path', this.finalPath)
       const stateDir = `${this.finalPath}.idmpart`
       const ranges = probe.ranges && probe.total ? splitRanges(probe.total, this.opts.parts) : null
       const meta = this.readMeta(stateDir)

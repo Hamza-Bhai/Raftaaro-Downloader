@@ -1,0 +1,404 @@
+:root {
+  --bg: #1e1f26;
+  --side: #16171c;
+  --card: #2b2d36;
+  --card-hi: #34363f;
+  --text: #eeeeee;
+  --muted: #9a9aa3;
+  --accent: #3b82f6;
+  --done: #22c55e;
+  --error: #ef4444;
+  --track: #444651;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sidebar {
+  width: 190px;
+  flex-shrink: 0;
+  background: var(--side);
+  padding: 16px 10px;
+}
+
+.brand {
+  color: #6ea8fe;
+  font-weight: 700;
+  font-size: 15px;
+  margin: 0 8px 18px;
+}
+
+.nav {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 10px;
+  margin-bottom: 2px;
+  color: var(--muted);
+}
+
+.nav:hover {
+  background: var(--card);
+  color: var(--text);
+}
+
+.nav.active {
+  background: var(--card);
+  color: var(--text);
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-width: 0;
+}
+
+.addbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.addbar input {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.addbar input:focus {
+  border-color: var(--accent);
+}
+
+.primary {
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-weight: 600;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ghost {
+  background: var(--card);
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 14px;
+}
+
+.banner {
+  background: #1d3a6b;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.banner .url {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty {
+  color: var(--muted);
+  text-align: center;
+  margin-top: 60px;
+}
+
+.card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--card);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.card:hover {
+  background: var(--card-hi);
+}
+
+.thumb {
+  width: 88px;
+  height: 50px;
+  border-radius: 5px;
+  background: #555 center / cover no-repeat;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.bar {
+  height: 5px;
+  background: var(--track);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.bar > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s;
+}
+
+.card.done .bar > div {
+  background: var(--done);
+}
+
+.card.error .bar > div {
+  background: var(--error);
+}
+
+.card.indeterminate .bar > div {
+  width: 30% !important;
+  animation: slide 1.2s infinite linear;
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.card.error .meta {
+  color: #fca5a5;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.actions button {
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 15px;
+}
+
+.actions button:hover {
+  background: var(--bg);
+}
+
+/* dialogs */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  background: var(--bg);
+  border: 1px solid #33353f;
+  border-radius: 10px;
+  padding: 16px;
+  width: 460px;
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.dialog .head {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.dialog .head .thumb {
+  width: 120px;
+  height: 68px;
+}
+
+.dialog label {
+  color: var(--muted);
+  display: block;
+  margin-bottom: 3px;
+}
+
+.dialog select {
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 0;
+  border-radius: 5px;
+  padding: 7px;
+  font: inherit;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.row > div {
+  flex: 1;
+}
+
+.folder {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  margin: 12px 0;
+}
+
+.folder span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.err {
+  color: #fca5a5;
+  margin: 8px 0;
+}
+
+.entries {
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--card);
+  border-radius: 6px;
+  padding: 6px;
+  margin: 8px 0;
+}
+
+.entries label {
+  display: flex;
+  gap: 8px;
+  color: var(--text);
+  padding: 4px;
+}
+
+.entries .dur {
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* settings */
+.settings {
+  max-width: 560px;
+  overflow-y: auto;
+}
+
+.settings h2 {
+  margin-top: 0;
+}
+
+.setting {
+  background: var(--card);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.setting .label {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.setting .hint {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.setting input[type='number'] {
+  width: 80px;
+  background: var(--bg);
+  color: var(--text);
+  border: 0;
+  border-radius: 5px;
+  padding: 6px;
+  font: inherit;
+}
+
+.setting code {
+  background: var(--bg);
+  padding: 4px 6px;
+  border-radius: 4px;
+  user-select: all;
+}
+
+.spinner {
+  text-align: center;
+  padding: 30px;
+  color: var(--muted);
+}

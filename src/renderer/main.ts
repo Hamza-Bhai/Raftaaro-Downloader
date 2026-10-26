@@ -1,1 +1,105 @@
-document.getElementById('app')!.textContent = 'IDM-Downloader'
+import type { Job } from '../shared/types'
+import { renderCard, updateCard, type CardHandlers } from './card'
+
+type View = 'all' | 'videos' | 'audio' | 'done' | 'settings'
+
+const list = document.getElementById('list')!
+const empty = document.getElementById('empty')!
+const settingsEl = document.getElementById('settings')!
+const form = document.getElementById('addForm') as HTMLFormElement
+const input = document.getElementById('urlInput') as HTMLInputElement
+
+const jobs = new Map<string, Job>()
+const cards = new Map<string, HTMLElement>()
+let view: View = 'all'
+
+const handlers: CardHandlers = {
+  pause: (id) => void window.idm.pause(id),
+  resume: (id) => void window.idm.resume(id),
+  openFile: (id) => void window.idm.openFile(id),
+  openFolder: (id) => void window.idm.openFolder(id),
+  remove: (id) => {
+    const job = jobs.get(id)
+    if (!job) return
+    const deleteFile =
+      job.status === 'done'
+        ? confirm(`"${job.title}" list se hata rahe hain.\n\nKya file bhi delete kar dein?`)
+        : true
+    void window.idm.remove(id, deleteFile)
+  }
+}
+
+function visible(job: Job): boolean {
+  switch (view) {
+    case 'videos':
+      return job.kind === 'video' && job.choice?.media !== 'audio'
+    case 'audio':
+      return job.choice?.media === 'audio'
+    case 'done':
+      return job.status === 'done'
+    default:
+      return true
+  }
+}
+
+function upsert(job: Job): void {
+  jobs.set(job.id, job)
+  let el = cards.get(job.id)
+  if (el) updateCard(el, job)
+  else {
+    el = renderCard(job, handlers)
+    cards.set(job.id, el)
+    list.prepend(el)
+  }
+  el.hidden = !visible(job)
+  refreshEmpty()
+}
+
+function drop(id: string): void {
+  jobs.delete(id)
+  cards.get(id)?.remove()
+  cards.delete(id)
+  refreshEmpty()
+}
+
+function refreshEmpty(): void {
+  const any = [...cards.values()].some((c) => !c.hidden)
+  empty.hidden = view === 'settings' || any
+}
+
+function setView(v: View): void {
+  view = v
+  document.querySelectorAll<HTMLButtonElement>('.nav').forEach((b) => b.classList.toggle('active', b.dataset.view === v))
+  list.hidden = v === 'settings'
+  settingsEl.hidden = v !== 'settings'
+  for (const [id, el] of cards) el.hidden = !visible(jobs.get(id)!)
+  refreshEmpty()
+  document.dispatchEvent(new CustomEvent('idm:view', { detail: v }))
+}
+
+/** Start a download for a link typed, pasted or received. Later tasks route video links to the quality dialog. */
+export async function startDownload(url: string): Promise<void> {
+  await window.idm.addFile(url)
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const url = input.value.trim()
+  if (!url) return
+  if (!/^https?:\/\//i.test(url)) {
+    alert('Sahi link dalein (http:// ya https:// se shuru hone wala).')
+    return
+  }
+  input.value = ''
+  await startDownload(url)
+})
+
+document.querySelectorAll<HTMLButtonElement>('.nav').forEach((b) =>
+  b.addEventListener('click', () => setView(b.dataset.view as View))
+)
+
+window.idm.onUpdate(upsert)
+window.idm.onRemoved(drop)
+const initial = await window.idm.list()
+initial.sort((a, b) => a.createdAt - b.createdAt).forEach(upsert)
+refreshEmpty()
