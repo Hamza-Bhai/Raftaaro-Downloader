@@ -1,5 +1,9 @@
 import type { Job } from '../shared/types'
+import { isVideoSiteUrl } from '../shared/links'
 import { renderCard, updateCard, type CardHandlers } from './card'
+import { esc, openDialog, setBody } from './dialog'
+import { showQualityDialog } from './quality-dialog'
+import { showPlaylistDialog } from './playlist-dialog'
 
 type View = 'all' | 'videos' | 'audio' | 'done' | 'settings'
 
@@ -77,9 +81,26 @@ function setView(v: View): void {
   document.dispatchEvent(new CustomEvent('idm:view', { detail: v }))
 }
 
-/** Start a download for a link typed, pasted or received. Later tasks route video links to the quality dialog. */
+/** Start a download for a link typed, pasted or received: video sites go through the quality dialog. */
 export async function startDownload(url: string): Promise<void> {
-  await window.idm.addFile(url)
+  if (!isVideoSiteUrl(url)) {
+    await window.idm.addFile(url)
+    return
+  }
+  const d = openDialog(`<div class="spinner">⏳ Video ki maloomat li ja rahi hai…</div>`)
+  const info = await window.idm.probe(url)
+  if (!document.body.contains(d.el)) return // closed while waiting
+  if ('error' in info) {
+    setBody(
+      d,
+      `<div class="err">❌ ${esc(info.error)}</div>
+       <div class="footer"><button class="ghost" id="dClose">Theek hai</button></div>`
+    )
+    d.el.querySelector('#dClose')!.addEventListener('click', d.close)
+    return
+  }
+  if (info.kind === 'playlist') await showPlaylistDialog(d, info)
+  else await showQualityDialog(d, info)
 }
 
 form.addEventListener('submit', async (e) => {

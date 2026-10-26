@@ -76,3 +76,13 @@ export interface PlaylistInfo {
   title: string
   entries: { url: string; title: string; durationSec: number | null }[]
 }
+
+/** What the quality / playlist dialogs send to queue a video download. */
+export interface AddVideoInput {
+  url: string
+  title: string
+  thumbnail: string | null
+  choice: VideoChoice
+  folder?: string
+  estBytes: number | null
+}

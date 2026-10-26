@@ -1,7 +1,10 @@
-import { BrowserWindow, ipcMain, shell } from 'electron'
+import { BrowserWindow, dialog, ipcMain, shell, type OpenDialogOptions } from 'electron'
 import { dirname } from 'node:path'
 import { existsSync, statSync } from 'node:fs'
-import type { Job } from '../shared/types'
+import type { AddVideoInput, Job, MediaType, PlaylistInfo, VideoInfo } from '../shared/types'
+import { probe } from './video/ytdlp'
+import { binPath } from './video/bins'
+import { buildQualityOptions } from './video/formats'
 import type { DownloadQueue } from './queue'
 import type { Store } from './store'
 
@@ -31,6 +34,19 @@ export function addFileJob(deps: IpcDeps, url: string): Job {
   })
 }
 
+export function addVideoJob(deps: IpcDeps, v: AddVideoInput): Job {
+  const folders = deps.store.getSettings().folders
+  return deps.queue.add({
+    kind: 'video',
+    url: v.url,
+    title: v.title,
+    thumbnail: v.thumbnail ?? undefined,
+    choice: v.choice,
+    savePath: v.folder ?? (v.choice.media === 'audio' ? folders.audio : folders.videos),
+    totalBytes: v.estBytes
+  })
+}
+
 export function registerIpc(deps: IpcDeps): void {
   const { queue } = deps
   const send = (channel: string, payload: unknown): void => deps.window()?.webContents.send(channel, payload)
@@ -39,6 +55,22 @@ export function registerIpc(deps: IpcDeps): void {
 
   const job = (id: string): Job | undefined => queue.list().find((j) => j.id === id)
 
+  ipcMain.handle('video:probe', async (_e, url: string): Promise<VideoInfo | PlaylistInfo | { error: string }> => {
+    try {
+      return await probe(url, deps.store.getSettings(), { exe: binPath('yt-dlp') })
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : String(e) }
+    }
+  })
+  ipcMain.handle('video:qualityOptions', (_e, info: VideoInfo, media: MediaType) => buildQualityOptions(info, media))
+  ipcMain.handle('video:add', (_e, v: AddVideoInput) => addVideoJob(deps, v))
+  ipcMain.handle('dialog:pickFolder', async (_e, current?: string) => {
+    const win = deps.window()
+    const opts: OpenDialogOptions = { properties: ['openDirectory', 'createDirectory'], defaultPath: current }
+    const r = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
+    return r.canceled ? null : r.filePaths[0]
+  })
+  ipcMain.handle('settings:get', () => deps.store.getSettings())
   ipcMain.handle('jobs:list', () => queue.list())
   ipcMain.handle('jobs:addFile', (_e, url: string) => addFileJob(deps, url))
   ipcMain.handle('jobs:pause', (_e, id: string) => queue.pause(id))

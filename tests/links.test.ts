@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isDownloadableUrl, isVideoSiteUrl } from '../src/main/util/links'
+import { isDownloadableUrl, isVideoSiteUrl } from '../src/shared/links'
 
 describe('isDownloadableUrl', () => {
   it('accepts a trimmed http(s) url', () => {

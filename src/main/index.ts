@@ -5,6 +5,8 @@ import { Store } from './store'
 import { DownloadQueue, type Runner } from './queue'
 import { HttpDownload } from './http/http-download'
 import { registerIpc } from './ipc'
+import { YtDlpDownload } from './video/ytdlp'
+import { binDir, binPath } from './video/bins'
 import type { Job } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -50,6 +52,7 @@ app.whenReady().then(() => {
   const store = new Store(app.getPath('userData'), app.getPath('downloads'))
   const makeRunner = (job: Job): Runner => {
     const settings = store.getSettings()
+    if (job.kind === 'video') return new YtDlpDownload(job, settings, { exe: binPath('yt-dlp') }, binDir())
     return new HttpDownload({
       url: job.url,
       dir: settings.folders.files,

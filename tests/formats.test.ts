@@ -35,6 +35,29 @@ describe('buildQualityOptions', () => {
     ])
   })
 
+  it('estimates from bitrate and duration when sizes are missing', () => {
+    const info = fixture('yt-4k.json')
+    info.formats = [
+      { format_id: 'v', ext: 'mp4', height: 720, vcodec: 'avc1', acodec: 'none', filesize: null, filesize_approx: null, tbr: 1000 },
+      { format_id: 'a', ext: 'm4a', height: null, vcodec: 'none', acodec: 'mp4a', filesize: null, filesize_approx: null, tbr: 128 }
+    ]
+    // (1000 + 128) kbit/s * 624 s / 8 = 87,984,000 bytes
+    expect(buildQualityOptions(info, 'video').find((o) => o.value === 720)!.estBytes).toBe(87984000)
+  })
+
+  it('estimates with the H.264 stream when one exists at that height', () => {
+    const info = fixture('yt-4k.json')
+    // 1080p has avc1 (100 MB) and a higher-bitrate vp9 (90 MB approx): the avc1 one is what gets downloaded
+    info.formats = info.formats.map((f) => (f.format_id === '248' ? { ...f, tbr: 9000 } : f))
+    expect(buildQualityOptions(info, 'video').find((o) => o.value === 1080)!.estBytes).toBe(110000000)
+  })
+
+  it('prefers a stream with a known size over a sizeless (HLS) one of the same codec', () => {
+    const info = fixture('yt-4k.json')
+    info.formats.push({ format_id: '96', ext: 'mp4', height: 1080, vcodec: 'avc1.640028', acodec: 'none', filesize: null, filesize_approx: null, tbr: 9000 })
+    expect(buildQualityOptions(info, 'video').find((o) => o.value === 1080)!.estBytes).toBe(110000000)
+  })
+
   it('still offers Best when no heights are known', () => {
     const info = { ...fixture('muxed-only.json'), formats: [] }
     expect(buildQualityOptions(info, 'video')).toEqual([{ value: 'best', label: '⭐ Best', estBytes: null }])
@@ -55,6 +78,13 @@ describe('buildFormatSelector', () => {
       expect(f).toContain('+ba')
       expect(args).toContain('--merge-output-format')
       expect(args[args.indexOf('--merge-output-format') + 1]).toBe('mp4')
+    }
+  })
+
+  it('prefers widely playable H.264 video and m4a audio at the chosen resolution', () => {
+    for (const c of videoChoices) {
+      const args = buildFormatSelector(c)
+      expect(args[args.indexOf('-S') + 1]).toBe('res,+codec:avc:m4a')
     }
   })
 
