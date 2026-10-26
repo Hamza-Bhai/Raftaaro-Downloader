@@ -22,7 +22,7 @@ export async function showPlaylistDialog(d: DialogHandle, info: PlaylistInfo): P
     d,
     `<b>${esc(info.title)}</b>
      <div class="muted">${info.entries.length} videos</div>
-     <label style="margin-top:10px"><input type="checkbox" id="pAll" checked /> Sab chunein</label>
+     <label style="margin-top:10px"><input type="checkbox" id="pAll" checked /> Select all</label>
      <div class="entries">
        ${info.entries
          .map(
@@ -32,12 +32,12 @@ export async function showPlaylistDialog(d: DialogHandle, info: PlaylistInfo): P
          .join('')}
      </div>
      <div class="row">
-       <div><label>Qisam</label>
+       <div><label>Type</label>
          <select id="pMedia"><option value="video">🎬 Video</option><option value="audio">🎵 Audio</option></select>
        </div>
        <div><label>Quality</label><select id="pQuality"></select></div>
      </div>
-     <div class="muted">Agar koi video is quality mein na ho to sab se qareebi quality li jayegi.</div>
+     <div class="muted">If a video is not available in this quality, the closest one is used.</div>
      <div class="footer" style="margin-top:12px">
        <button class="ghost" id="pCancel">Cancel</button>
        <button class="primary" id="pGo"></button>
@@ -76,7 +76,7 @@ export async function showPlaylistDialog(d: DialogHandle, info: PlaylistInfo): P
         ? { media: m, height: 'best' as const, audioFormat: AUDIO_QUALITIES[i].value }
         : { media: m, height: VIDEO_QUALITIES[i].value }
     const entries = boxes.filter((b) => b.checked).map((b) => info.entries[Number(b.dataset.i)])
-    await window.idm.addPlaylist({ title: info.title, entries, choice })
+    await window.raftaaro.addPlaylist({ title: info.title, entries, choice })
     d.close()
   })
   fillQuality()

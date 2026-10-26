@@ -1,7 +1,7 @@
-import type { IdmApi } from './index'
+import type { RaftaaroApi } from './index'
 
 declare global {
   interface Window {
-    idm: IdmApi
+    raftaaro: RaftaaroApi
   }
 }

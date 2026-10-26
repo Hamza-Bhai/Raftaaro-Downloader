@@ -20,7 +20,7 @@ const FFMPEG_SUMS = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/lat
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex')
 
 async function download(url) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'IDM-Downloader-build' } })
+  const res = await fetch(url, { headers: { 'User-Agent': 'Raftaaro-build' } })
   if (!res.ok) throw new Error(`${url} -> HTTP ${res.status}`)
   return Buffer.from(await res.arrayBuffer())
 }
@@ -61,7 +61,7 @@ async function fetchFfmpeg() {
   const line = sums.toString('utf8').split('\n').find((l) => l.trim().endsWith(FFMPEG_NAME))
   if (!line) throw new Error(`${FFMPEG_NAME} not listed in checksums.sha256`)
   verify(zip, line.trim().split(/\s+/)[0], 'ffmpeg zip')
-  const work = mkdtempSync(join(tmpdir(), 'idm-ffmpeg-'))
+  const work = mkdtempSync(join(tmpdir(), 'raftaaro-ffmpeg-'))
   try {
     const zipPath = join(work, 'ffmpeg.zip')
     writeFileSync(zipPath, zip)

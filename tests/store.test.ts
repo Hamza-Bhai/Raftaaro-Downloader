@@ -6,8 +6,8 @@ import { Store } from '../src/main/store'
 import type { Job } from '../src/shared/types'
 
 const fresh = (): { dir: string; dl: string } => ({
-  dir: mkdtempSync(join(tmpdir(), 'idm-store-')),
-  dl: mkdtempSync(join(tmpdir(), 'idm-dl-'))
+  dir: mkdtempSync(join(tmpdir(), 'raftaaro-store-')),
+  dl: mkdtempSync(join(tmpdir(), 'raftaaro-dl-'))
 })
 
 describe('Store', () => {
@@ -18,9 +18,9 @@ describe('Store', () => {
     expect(s.maxConcurrent).toBe(3)
     expect(s.useChromeCookies).toBe(false)
     expect(s.apiToken).toMatch(/^[0-9a-f]{32}$/)
-    expect(s.folders.videos).toBe(join(dl, 'IDM-Downloader', 'Videos'))
-    expect(s.folders.audio).toBe(join(dl, 'IDM-Downloader', 'Audio'))
-    expect(s.folders.files).toBe(join(dl, 'IDM-Downloader', 'Files'))
+    expect(s.folders.videos).toBe(join(dl, 'Raftaaro', 'Videos'))
+    expect(s.folders.audio).toBe(join(dl, 'Raftaaro', 'Audio'))
+    expect(s.folders.files).toBe(join(dl, 'Raftaaro', 'Files'))
   })
 
   it('keeps the same token across instances', () => {

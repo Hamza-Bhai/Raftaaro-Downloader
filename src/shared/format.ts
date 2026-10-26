@@ -14,9 +14,9 @@ export function formatBytes(n: number | null): string {
 
 export function formatEta(sec: number | null): string {
   if (sec === null) return ''
-  if (sec < 60) return `${Math.round(sec)} sec baqi`
-  if (sec < 3600) return `${Math.round(sec / 60)} min baqi`
-  return `${Math.round(sec / 3600)} ghante baqi`
+  if (sec < 60) return `${Math.round(sec)} sec left`
+  if (sec < 3600) return `${Math.round(sec / 60)} min left`
+  return `${Math.round(sec / 3600)} hr left`
 }
 
 export function formatDuration(sec: number | null): string {

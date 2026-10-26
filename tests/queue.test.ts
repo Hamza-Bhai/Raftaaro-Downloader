@@ -20,7 +20,7 @@ class FakeRunner extends EventEmitter implements Runner {
 }
 
 function setup(jobs: Job[] = []): { store: Store; queue: DownloadQueue; runners: Map<string, FakeRunner> } {
-  const store = new Store(mkdtempSync(join(tmpdir(), 'idm-q-')), mkdtempSync(join(tmpdir(), 'idm-dl-')))
+  const store = new Store(mkdtempSync(join(tmpdir(), 'raftaaro-q-')), mkdtempSync(join(tmpdir(), 'raftaaro-dl-')))
   store.saveJobs(jobs)
   const runners = new Map<string, FakeRunner>()
   const queue = new DownloadQueue(store, (job) => {
@@ -97,15 +97,15 @@ describe('DownloadQueue', () => {
   })
 
   it('remove with deleteFile deletes savePath and parts but never a folder', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'idm-rm-'))
+    const dir = mkdtempSync(join(tmpdir(), 'raftaaro-rm-'))
     const file = join(dir, 'a.zip')
     writeFileSync(file, 'x')
-    mkdirSync(`${file}.idmpart`)
+    mkdirSync(`${file}.rpart`)
     const { queue } = setup()
     const job = queue.add({ ...input(1), savePath: file })
     queue.remove(job.id, true)
     expect(existsSync(file)).toBe(false)
-    expect(existsSync(`${file}.idmpart`)).toBe(false)
+    expect(existsSync(`${file}.rpart`)).toBe(false)
     expect(queue.list()).toEqual([])
 
     const job2 = queue.add({ ...input(2), savePath: dir })

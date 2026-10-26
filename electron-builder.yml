@@ -1,5 +1,5 @@
-appId: com.local.idmdownloader
-productName: IDM-Downloader
+appId: com.local.raftaaro
+productName: Raftaaro
 directories:
   buildResources: build
   output: dist
@@ -27,7 +27,7 @@ extraResources:
   - from: extension
     to: extension
 win:
-  executableName: IDM-Downloader
+  executableName: Raftaaro
   icon: build/icon.png
   target:
     - nsis

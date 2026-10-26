@@ -21,8 +21,8 @@ export interface YtProgress {
 }
 
 const PROGRESS_TEMPLATE =
-  'download:IDMP %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(progress.eta)s'
-const FILE_MARK = 'IDMFILE:'
+  'download:RFTP %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(progress.eta)s'
+const FILE_MARK = 'RFTFILE:'
 
 const num = (s: string | undefined): number | null => {
   if (s === undefined || s === 'NA' || s === 'None') return null
@@ -48,7 +48,7 @@ function fileSize(path: string): number | null {
 }
 
 export function parseProgress(line: string): YtProgress | null {
-  if (!line.startsWith('IDMP ')) return null
+  if (!line.startsWith('RFTP ')) return null
   const [, downloaded, total, estimate, speed, eta] = line.trim().split(/\s+/)
   return {
     downloaded: num(downloaded) ?? 0,
@@ -60,15 +60,15 @@ export function parseProgress(line: string): YtProgress | null {
 
 export function classifyYtDlpError(stderr: string): string {
   if (/sign in|login required|private video|log in/i.test(stderr)) {
-    return "Login chahiye — Settings mein 'Chrome login' on karein"
+    return 'Sign-in required — turn on "Use my Chrome login" in Settings'
   }
   if (/HTTP Error 403|Unable to extract|nsig|Requested format is not available/i.test(stderr)) {
-    return 'yt-dlp purana ho gaya — Settings se update karein'
+    return 'yt-dlp is out of date — update it in Settings'
   }
-  if (/Video unavailable|This video is not available/i.test(stderr)) return 'Video dastiyab nahi'
+  if (/Video unavailable|This video is not available/i.test(stderr)) return 'Video unavailable'
   const errors = stderr.split(/\r?\n/).filter((l) => l.startsWith('ERROR:'))
   const last = errors.at(-1)
-  return last ? last.replace(/^ERROR:\s*/, '') : 'Download nakam ho gaya'
+  return last ? last.replace(/^ERROR:\s*/, '') : 'Download failed'
 }
 
 /** Electron's executable acts as plain Node when yt-dlp runs it as its JS runtime. */
@@ -103,7 +103,7 @@ function runJson(exec: YtDlpExec, args: string[]): Promise<Record<string, unknow
         try {
           resolve(JSON.parse(stdout) as Record<string, unknown>)
         } catch {
-          reject(new Error('yt-dlp ka jawab samajh nahi aaya'))
+          reject(new Error('Could not read the answer from yt-dlp'))
         }
       }
     )
@@ -237,7 +237,7 @@ export class YtDlpDownload extends EventEmitter {
       })
       child.stderr.on('data', (chunk: string) => (stderr += chunk))
       child.on('error', (e) => {
-        if (!this.paused) this.emit('error', new Error(`yt-dlp chal nahi saka: ${e.message}`))
+        if (!this.paused) this.emit('error', new Error(`Could not start yt-dlp: ${e.message}`))
         resolve()
       })
       child.on('close', (code) => {

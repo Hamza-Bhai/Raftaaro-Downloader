@@ -32,11 +32,11 @@ describe('playlistFolder', () => {
 
 describe('uniquePath', () => {
   it('returns the plain path when free', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'idm-'))
+    const dir = mkdtempSync(join(tmpdir(), 'raftaaro-'))
     expect(uniquePath(dir, 'a.mp4')).toBe(join(dir, 'a.mp4'))
   })
   it('appends a counter when the file exists', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'idm-'))
+    const dir = mkdtempSync(join(tmpdir(), 'raftaaro-'))
     writeFileSync(join(dir, 'a.mp4'), '')
     expect(uniquePath(dir, 'a.mp4')).toBe(join(dir, 'a (1).mp4'))
     writeFileSync(join(dir, 'a (1).mp4'), '')

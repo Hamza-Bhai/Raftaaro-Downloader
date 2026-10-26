@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "IDM-Downloader",
+  "name": "Raftaaro",
   "version": "1.0.0",
-  "description": "YouTube aur doosri sites se IDM-Downloader app mein ek click mein download bhejein.",
+  "description": "Send videos and files from YouTube and other sites to the Raftaaro download manager in one click.",
   "permissions": ["contextMenus", "storage"],
   "host_permissions": ["http://127.0.0.1:47821/*"],
   "background": { "service_worker": "background.js" },
@@ -14,6 +14,6 @@
       "run_at": "document_idle"
     }
   ],
-  "action": { "default_popup": "popup.html", "default_title": "IDM-Downloader" },
+  "action": { "default_popup": "popup.html", "default_title": "Raftaaro" },
   "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
 }

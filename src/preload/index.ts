@@ -8,7 +8,7 @@ function subscribe<T>(channel: string, cb: (payload: T) => void): () => void {
 }
 
 /** The typed bridge the renderer uses to talk to the main process. */
-const idm = {
+const api = {
   list: (): Promise<Job[]> => ipcRenderer.invoke('jobs:list'),
   addFile: (url: string): Promise<Job> => ipcRenderer.invoke('jobs:addFile', url),
   pause: (id: string): Promise<void> => ipcRenderer.invoke('jobs:pause', id),
@@ -31,6 +31,6 @@ const idm = {
   onIncomingLink: (cb: (url: string) => void): (() => void) => subscribe('link:incoming', cb)
 }
 
-export type IdmApi = typeof idm
+export type RaftaaroApi = typeof api
 
-contextBridge.exposeInMainWorld('idm', idm)
+contextBridge.exposeInMainWorld('raftaaro', api)

@@ -12,7 +12,7 @@ export class Store {
     downloadsRoot: string
   ) {
     mkdirSync(dir, { recursive: true })
-    const root = join(downloadsRoot, 'IDM-Downloader')
+    const root = join(downloadsRoot, 'Raftaaro')
     const defaults: Settings = {
       folders: {
         videos: join(root, 'Videos'),

@@ -20,17 +20,17 @@ function statusLine(job: Job): string {
   const pct = job.totalBytes ? Math.floor((job.receivedBytes / job.totalBytes) * 100) : null
   switch (job.status) {
     case 'queued':
-      return 'Intezar mein…'
+      return 'Waiting…'
     case 'probing':
-      return 'Maloomat li ja rahi hai…'
+      return 'Getting info…'
     case 'merging':
-      return 'Video aur aawaz jori ja rahi hai…'
+      return 'Joining video and audio…'
     case 'paused':
-      return `Ruka hua${pct !== null ? ` · ${pct}%` : ''}${size ? ` · ${size}` : ''}`
+      return `Paused${pct !== null ? ` · ${pct}%` : ''}${size ? ` · ${size}` : ''}`
     case 'done':
-      return `Mukammal ✅${size ? ` · ${size}` : ''}`
+      return `Completed ✅${size ? ` · ${size}` : ''}`
     case 'error':
-      return `❌ ${job.error ?? 'Masla aa gaya'}`
+      return `❌ ${job.error ?? 'Something went wrong'}`
     case 'downloading': {
       const parts = [
         pct !== null ? `${pct}%` : formatBytes(job.receivedBytes),
@@ -64,8 +64,8 @@ export function renderCard(job: Job, h: CardHandlers): HTMLElement {
     </div>
     <div class="actions">
       <button data-act="toggle"></button>
-      <button data-act="folder" title="Folder kholain">📂</button>
-      <button data-act="remove" title="Hatayein">🗑</button>
+      <button data-act="folder" title="Open folder">📂</button>
+      <button data-act="remove" title="Remove">🗑</button>
     </div>`
   el.addEventListener('click', (e) => {
     const act = (e.target as HTMLElement).closest('button')?.dataset.act
@@ -104,12 +104,12 @@ export function updateCard(el: HTMLElement, job: Job): void {
   const toggle = el.querySelector<HTMLButtonElement>('[data-act="toggle"]')!
   if (job.status === 'done') {
     toggle.textContent = '▶'
-    toggle.title = 'File kholain'
+    toggle.title = 'Open file'
   } else if (job.status === 'paused' || job.status === 'error') {
     toggle.textContent = '⏵'
-    toggle.title = job.status === 'error' ? 'Dobara koshish' : 'Jaari rakhein'
+    toggle.title = job.status === 'error' ? 'Retry' : 'Resume'
   } else {
     toggle.textContent = '⏸'
-    toggle.title = 'Rokain'
+    toggle.title = 'Pause'
   }
 }

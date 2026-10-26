@@ -19,15 +19,15 @@ if (args.includes('--progress-template')) {
   }
   const lines = [
     '[download] Destination: v.f1.mp4',
-    'IDMP 500 1000 NA 100 5',
-    'IDMP 1000 1000 NA 100 0',
+    'RFTP 500 1000 NA 100 5',
+    'RFTP 1000 1000 NA 100 0',
     '[download] Destination: v.f2.m4a',
-    'IDMP 200 400 NA 100 2',
+    'RFTP 200 400 NA 100 2',
     '[Merger] Merging formats into "v.mp4"'
   ]
   for (const l of lines) process.stdout.write(l + '\n')
   writeFileSync(out, Buffer.alloc(1234))
-  process.stdout.write('IDMFILE:' + out + '\n')
+  process.stdout.write('RFTFILE:' + out + '\n')
   process.exit(0)
 }
 

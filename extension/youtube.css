@@ -1,4 +1,4 @@
-.idm-btn {
+.raftaaro-btn {
   background: #3b82f6;
   color: #fff;
   border: 0;
@@ -11,15 +11,15 @@
   white-space: nowrap;
 }
 
-.idm-btn:hover {
+.raftaaro-btn:hover {
   background: #2563eb;
 }
 
-.idm-btn:disabled {
+.raftaaro-btn:disabled {
   opacity: 0.6;
 }
 
-.idm-toast {
+.raftaaro-toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -31,10 +31,10 @@
   font: 14px Roboto, Arial, sans-serif;
 }
 
-.idm-toast.ok {
+.raftaaro-toast.ok {
   background: #166534;
 }
 
-.idm-toast.err {
+.raftaaro-toast.err {
   background: #991b1b;
 }

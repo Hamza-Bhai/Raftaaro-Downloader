@@ -23,7 +23,7 @@ function createWindow(): void {
     minWidth: 760,
     minHeight: 480,
     show: false,
-    title: 'IDM-Downloader',
+    title: 'Raftaaro',
     icon: iconPath,
     backgroundColor: '#1e1f26',
     autoHideMenuBar: true,
@@ -66,7 +66,7 @@ function showWindow(): BrowserWindow {
 
 function refreshTrayTooltip(): void {
   const n = queue?.activeCount() ?? 0
-  tray?.setToolTip(n ? `IDM-Downloader — ${n} downloads chal rahe hain` : 'IDM-Downloader')
+  tray?.setToolTip(n ? `Raftaaro — ${n} download${n === 1 ? '' : 's'} running` : 'Raftaaro')
 }
 
 function showTray(): void {
@@ -74,9 +74,9 @@ function showTray(): void {
     tray = new Tray(nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 }))
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: 'Kholain', click: () => showWindow() },
+        { label: 'Open Raftaaro', click: () => showWindow() },
         {
-          label: 'Band karein',
+          label: 'Quit',
           click: () => {
             quitting = true
             app.quit()
@@ -95,7 +95,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', () => showWindow())
 
   app.whenReady().then(() => {
-    electronApp.setAppUserModelId('com.local.idmdownloader')
+    electronApp.setAppUserModelId('com.local.raftaaro')
 
     app.on('browser-window-created', (_, window) => {
       optimizer.watchWindowShortcuts(window)

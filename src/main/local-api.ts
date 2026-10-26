@@ -18,7 +18,7 @@ export interface LocalApi {
 }
 
 function tokenOk(req: IncomingMessage, token: string): boolean {
-  const given = Buffer.from(String(req.headers['x-idm-token'] ?? ''))
+  const given = Buffer.from(String(req.headers['x-raftaaro-token'] ?? ''))
   const want = Buffer.from(token)
   return given.length === want.length && timingSafeEqual(given, want)
 }
@@ -43,20 +43,20 @@ function readBody(req: IncomingMessage): Promise<string | null> {
 
 /**
  * Loopback-only HTTP endpoint the Chrome extension uses to hand links to the app.
- * Every request must carry the X-IDM-Token header; only chrome-extension:// origins get CORS.
+ * Every request must carry the X-Raftaaro-Token header; only chrome-extension:// origins get CORS.
  */
 export function startLocalApi(opts: LocalApiOptions): Promise<LocalApi> {
   const server = createServer(async (req, res) => {
     const origin = String(req.headers.origin ?? '')
     if (origin.startsWith('chrome-extension://')) {
       res.setHeader('Access-Control-Allow-Origin', origin)
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-IDM-Token')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Raftaaro-Token')
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST')
     }
     if (req.method === 'OPTIONS') return send(res, 204)
     if (!tokenOk(req, opts.token)) return send(res, 401, { error: 'bad token' })
 
-    if (req.method === 'GET' && req.url === '/ping') return send(res, 200, { app: 'IDM-Downloader' })
+    if (req.method === 'GET' && req.url === '/ping') return send(res, 200, { app: 'Raftaaro' })
     if (req.method === 'POST' && req.url === '/add') {
       const body = await readBody(req)
       if (body === null) return send(res, 413, { error: 'too large' })

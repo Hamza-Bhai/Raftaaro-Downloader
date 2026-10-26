@@ -1,7 +1,7 @@
 {
-  "name": "idm-downloader",
+  "name": "raftaaro",
   "version": "1.0.0",
-  "description": "Free download manager with multi-part and video downloads",
+  "description": "Raftaaro — a free, open source download manager with multi-connection downloads and YouTube/video support",
   "main": "./out/main/index.js",
   "author": "Hamza",
   "scripts": {
@@ -39,5 +39,5 @@
     "vite": "^8.3.4",
     "vitest": "^5.0.5"
   },
-  "productName": "IDM-Downloader"
+  "productName": "Raftaaro"
 }

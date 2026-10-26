@@ -1,5 +1,5 @@
 // Adds a "⬇ Download" button next to YouTube's like/share buttons.
-const BTN_ID = 'idm-download-btn'
+const BTN_ID = 'raftaaro-download-btn'
 
 function videoUrl() {
   const u = new URL(location.href)
@@ -10,7 +10,7 @@ function videoUrl() {
 
 function toast(text, ok) {
   const t = document.createElement('div')
-  t.className = `idm-toast ${ok ? 'ok' : 'err'}`
+  t.className = `raftaaro-toast ${ok ? 'ok' : 'err'}`
   t.textContent = text
   document.body.appendChild(t)
   setTimeout(() => t.remove(), 4000)
@@ -28,9 +28,9 @@ function inject() {
   if (!bar) return
   const btn = document.createElement('button')
   btn.id = BTN_ID
-  btn.className = 'idm-btn'
+  btn.className = 'raftaaro-btn'
   btn.textContent = '⬇ Download'
-  btn.title = 'IDM-Downloader se download karein'
+  btn.title = 'Download with Raftaaro'
   btn.addEventListener('click', async (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -39,7 +39,7 @@ function inject() {
     btn.disabled = true
     const r = await chrome.runtime.sendMessage({ type: 'add', url: target, title: document.title })
     btn.disabled = false
-    toast(r?.ok ? 'IDM-Downloader mein bhej diya ✅' : r?.error || 'Masla aa gaya', !!r?.ok)
+    toast(r?.ok ? 'Sent to Raftaaro ✅' : r?.error || 'Something went wrong', !!r?.ok)
   })
   bar.prepend(btn)
 }

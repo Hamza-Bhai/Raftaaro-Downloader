@@ -14,10 +14,10 @@ describe('formatBytes', () => {
 })
 
 describe('formatEta', () => {
-  it('uses Roman Urdu wording', () => {
-    expect(formatEta(30)).toBe('30 sec baqi')
-    expect(formatEta(125)).toBe('2 min baqi')
-    expect(formatEta(7300)).toBe('2 ghante baqi')
+  it('uses short English wording', () => {
+    expect(formatEta(30)).toBe('30 sec left')
+    expect(formatEta(125)).toBe('2 min left')
+    expect(formatEta(7300)).toBe('2 hr left')
     expect(formatEta(null)).toBe('')
   })
 })

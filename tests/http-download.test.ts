@@ -74,7 +74,7 @@ const reset = (): void => {
   srv.slow = false
   srv.rangeRequests = []
 }
-const tmp = (): string => mkdtempSync(join(tmpdir(), 'idm-http-'))
+const tmp = (): string => mkdtempSync(join(tmpdir(), 'raftaaro-http-'))
 const run = (d: HttpDownload): Promise<string> =>
   new Promise((resolve, reject) => {
     d.on('done', resolve)

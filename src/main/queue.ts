@@ -82,7 +82,7 @@ export class DownloadQueue extends EventEmitter {
     this.jobs = this.jobs.filter((j) => j !== job)
     if (deleteFile) {
       if (isFile(job.savePath)) rmSync(job.savePath, { force: true })
-      rmSync(`${job.savePath}.idmpart`, { recursive: true, force: true })
+      rmSync(`${job.savePath}.rpart`, { recursive: true, force: true })
     }
     this.persist()
     this.emit('removed', id)

@@ -60,7 +60,7 @@ function get(
 ): Promise<{ res: IncomingMessage; url: string }> {
   return new Promise((resolve, reject) => {
     const doRequest = url.startsWith('https:') ? httpsRequest : httpRequest
-    const req = doRequest(url, { headers: { 'User-Agent': 'IDM-Downloader', ...headers } }, (res) => {
+    const req = doRequest(url, { headers: { 'User-Agent': 'Raftaaro', ...headers } }, (res) => {
       const status = res.statusCode ?? 0
       if (status >= 300 && status < 400 && res.headers.location) {
         res.resume()
@@ -98,7 +98,7 @@ function fileNameFrom(res: IncomingMessage, url: string): string {
   return sanitizeFileName(name)
 }
 
-/** Multi-part HTTP(S) download with pause/resume. Parts live in `<final>.idmpart/` until joined. */
+/** Multi-part HTTP(S) download with pause/resume. Parts live in `<final>.rpart/` until joined. */
 export class HttpDownload extends EventEmitter {
   finalPath = ''
   private requests = new Set<ClientRequest>()
@@ -121,7 +121,7 @@ export class HttpDownload extends EventEmitter {
       this.finalPath = this.pickFinalPath(probe.fileName)
       claimed.add(this.finalPath)
       this.emit('path', this.finalPath)
-      const stateDir = `${this.finalPath}.idmpart`
+      const stateDir = `${this.finalPath}.rpart`
       const ranges = probe.ranges && probe.total ? splitRanges(probe.total, this.opts.parts) : null
       const meta = this.readMeta(stateDir)
       if (!meta || meta.url !== this.opts.url || meta.total !== probe.total || !probe.ranges) {
@@ -181,15 +181,15 @@ export class HttpDownload extends EventEmitter {
   private pickFinalPath(fileName: string): string {
     const free = (p: string): boolean => !claimed.has(p)
     const resume = this.opts.resumePath
-    if (resume && free(resume) && existsSync(`${resume}.idmpart`)) return resume
+    if (resume && free(resume) && existsSync(`${resume}.rpart`)) return resume
     const preferred = join(this.opts.dir, fileName)
-    const meta = this.readMeta(`${preferred}.idmpart`)
+    const meta = this.readMeta(`${preferred}.rpart`)
     if (meta && meta.url === this.opts.url && !existsSync(preferred) && free(preferred)) return preferred
     mkdirSync(this.opts.dir, { recursive: true })
     // a name is free only if neither the file nor another download's part folder uses it
     for (let probe = fileName; ; ) {
       const candidate = uniquePath(this.opts.dir, probe)
-      if (!existsSync(`${candidate}.idmpart`) && free(candidate)) return candidate
+      if (!existsSync(`${candidate}.rpart`) && free(candidate)) return candidate
       probe = `_${probe}`
     }
   }

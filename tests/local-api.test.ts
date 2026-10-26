@@ -19,7 +19,7 @@ afterEach(async () => {
 const post = (base: string, body: unknown, token = TOKEN): Promise<Response> =>
   fetch(`${base}/add`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-IDM-Token': token },
+    headers: { 'Content-Type': 'application/json', 'X-Raftaaro-Token': token },
     body: typeof body === 'string' ? body : JSON.stringify(body)
   })
 
@@ -31,9 +31,9 @@ describe('local API', () => {
 
   it('answers ping with the app name when the token is right', async () => {
     const base = await start()
-    const ok = await fetch(`${base}/ping`, { headers: { 'X-IDM-Token': TOKEN } })
+    const ok = await fetch(`${base}/ping`, { headers: { 'X-Raftaaro-Token': TOKEN } })
     expect(ok.status).toBe(200)
-    expect(await ok.json()).toEqual({ app: 'IDM-Downloader' })
+    expect(await ok.json()).toEqual({ app: 'Raftaaro' })
     expect((await fetch(`${base}/ping`)).status).toBe(401)
   })
 

@@ -15,8 +15,8 @@ const settings: Settings = {
 const fake = { exe: process.execPath, preArgs: [join(__dirname, 'fixtures', 'fake-ytdlp.mjs')] }
 
 describe('parseProgress', () => {
-  it('parses an IDMP line', () => {
-    expect(parseProgress('IDMP 1048576 4194304 NA 524288 6')).toEqual({
+  it('parses an RFTP line', () => {
+    expect(parseProgress('RFTP 1048576 4194304 NA 524288 6')).toEqual({
       downloaded: 1048576,
       totalBytes: 4194304,
       speedBps: 524288,
@@ -24,7 +24,7 @@ describe('parseProgress', () => {
     })
   })
   it('uses the estimate when the total is NA', () => {
-    expect(parseProgress('IDMP 10 NA 200.5 NA NA')).toEqual({
+    expect(parseProgress('RFTP 10 NA 200.5 NA NA')).toEqual({
       downloaded: 10,
       totalBytes: 201,
       speedBps: null,
@@ -38,7 +38,7 @@ describe('parseProgress', () => {
 
 describe('classifyYtDlpError', () => {
   it('asks for login on bot checks, private and login-required content', () => {
-    const login = "Login chahiye — Settings mein 'Chrome login' on karein"
+    const login = 'Sign-in required — turn on "Use my Chrome login" in Settings'
     expect(classifyYtDlpError("ERROR: [youtube] a: Sign in to confirm you're not a bot")).toBe(login)
     expect(classifyYtDlpError('ERROR: [youtube] a: Private video. Sign in if you have been granted access')).toBe(login)
     expect(
@@ -46,16 +46,16 @@ describe('classifyYtDlpError', () => {
     ).toBe(login)
   })
   it('suggests updating on extraction and 403 errors', () => {
-    const upd = 'yt-dlp purana ho gaya — Settings se update karein'
+    const upd = 'yt-dlp is out of date — update it in Settings'
     expect(classifyYtDlpError('ERROR: unable to download video data: HTTP Error 403: Forbidden')).toBe(upd)
     expect(classifyYtDlpError('ERROR: [youtube] a: Unable to extract initial player response')).toBe(upd)
   })
   it('reports unavailable videos', () => {
-    expect(classifyYtDlpError('ERROR: [youtube] a: Video unavailable')).toBe('Video dastiyab nahi')
+    expect(classifyYtDlpError('ERROR: [youtube] a: Video unavailable')).toBe('Video unavailable')
   })
   it('falls back to the last ERROR line', () => {
     expect(classifyYtDlpError('WARNING: x\nERROR: something odd\n')).toBe('something odd')
-    expect(classifyYtDlpError('')).toBe('Download nakam ho gaya')
+    expect(classifyYtDlpError('')).toBe('Download failed')
   })
 })
 
@@ -94,7 +94,7 @@ describe('probe', () => {
   })
 
   it('passes cookies only when enabled and rejects with a friendly error', async () => {
-    const log = join(mkdtempSync(join(tmpdir(), 'idm-yt-')), 'args.log')
+    const log = join(mkdtempSync(join(tmpdir(), 'raftaaro-yt-')), 'args.log')
     process.env.FAKE_YTDLP_LOG = log
     try {
       await probe('https://www.youtube.com/watch?v=abc', settings, fake)
@@ -106,16 +106,16 @@ describe('probe', () => {
     } finally {
       delete process.env.FAKE_YTDLP_LOG
     }
-    await expect(probe('https://www.youtube.com/watch?v=fail', settings, fake)).rejects.toThrow(/Login chahiye/)
+    await expect(probe('https://www.youtube.com/watch?v=fail', settings, fake)).rejects.toThrow(/Sign-in required/)
   })
 
   it('gives yt-dlp a JavaScript runtime when one is configured', async () => {
-    const log = join(mkdtempSync(join(tmpdir(), 'idm-yt-')), 'args.log')
+    const log = join(mkdtempSync(join(tmpdir(), 'raftaaro-yt-')), 'args.log')
     process.env.FAKE_YTDLP_LOG = log
     try {
-      await probe('https://www.youtube.com/watch?v=abc', settings, { ...fake, nodePath: 'C:\\app\\IDM.exe' })
+      await probe('https://www.youtube.com/watch?v=abc', settings, { ...fake, nodePath: 'C:\\app\\Raftaaro.exe' })
       const args = JSON.parse(readFileSync(log, 'utf8').trim()) as string[]
-      expect(args[args.indexOf('--js-runtimes') + 1]).toBe('node:C:\\app\\IDM.exe')
+      expect(args[args.indexOf('--js-runtimes') + 1]).toBe('node:C:\\app\\Raftaaro.exe')
     } finally {
       delete process.env.FAKE_YTDLP_LOG
     }
@@ -124,7 +124,7 @@ describe('probe', () => {
 
 describe('YtDlpDownload', () => {
   it('reports combined progress, merging, and the real file size on done', async () => {
-    const out = join(mkdtempSync(join(tmpdir(), 'idm-ytd-')), 'v.mp4')
+    const out = join(mkdtempSync(join(tmpdir(), 'raftaaro-ytd-')), 'v.mp4')
     process.env.FAKE_YTDLP_OUT = out
     const job = {
       id: 'j',
@@ -162,7 +162,7 @@ describe('YtDlpDownload', () => {
   })
 
   it('prefers the real stream size over the dialog estimate', async () => {
-    const out = join(mkdtempSync(join(tmpdir(), 'idm-ytd-')), 'v.mp4')
+    const out = join(mkdtempSync(join(tmpdir(), 'raftaaro-ytd-')), 'v.mp4')
     process.env.FAKE_YTDLP_OUT = out
     const job = {
       id: 'j',
@@ -191,7 +191,7 @@ describe('YtDlpDownload', () => {
 
 describe('YtDlpDownload already downloaded', () => {
   it('finishes with the existing file when yt-dlp skips the download', async () => {
-    const out = join(mkdtempSync(join(tmpdir(), 'idm-ytd-')), 'v.mp4')
+    const out = join(mkdtempSync(join(tmpdir(), 'raftaaro-ytd-')), 'v.mp4')
     process.env.FAKE_YTDLP_OUT = out
     process.env.FAKE_YTDLP_EXISTING = '1'
     const job = {
