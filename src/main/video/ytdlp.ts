@@ -58,7 +58,16 @@ export function parseProgress(line: string): YtProgress | null {
   }
 }
 
+/**
+ * Chrome locks its cookie file while it runs and, since v127, encrypts cookies in a way yt-dlp
+ * often cannot read on Windows. The extension is used from inside Chrome, so this is common.
+ */
+const COOKIE_ERROR = /cookie database|Failed to decrypt with DPAPI|could not find .*cookies|cookies? .*locked/i
+const COOKIE_MESSAGE =
+  'Could not read your Chrome login (Chrome keeps it locked). Turn off "Use my Chrome login" in Settings, or fully close Chrome and retry.'
+
 export function classifyYtDlpError(stderr: string): string {
+  if (COOKIE_ERROR.test(stderr)) return COOKIE_MESSAGE
   if (/sign in|login required|private video|log in/i.test(stderr)) {
     return 'Sign-in required — turn on "Use my Chrome login" in Settings'
   }
@@ -137,7 +146,16 @@ function entryUrl(e: Raw): string {
 export async function probe(url: string, settings: Settings, exec: YtDlpExec): Promise<VideoInfo | PlaylistInfo> {
   const args = ['-J', '--flat-playlist', ...commonArgs(settings, exec.nodePath)]
   if (singleVideo(url)) args.push('--no-playlist')
-  const raw = await runJson(exec, [...args, url])
+  let raw: Raw
+  try {
+    raw = await runJson(exec, [...args, url])
+  } catch (e) {
+    // an unreadable Chrome login should not block public videos: try again without it
+    if (settings.useChromeCookies && e instanceof Error && e.message === COOKIE_MESSAGE) {
+      return probe(url, { ...settings, useChromeCookies: false }, exec)
+    }
+    throw e
+  }
   if (raw._type === 'playlist') {
     const entries = (Array.isArray(raw.entries) ? raw.entries : []) as Raw[]
     // a channel root lists its tabs (Videos, Shorts, ...); open the Videos tab instead
@@ -209,10 +227,29 @@ export class YtDlpDownload extends EventEmitter {
     super()
   }
 
-  start(): Promise<void> {
+  async start(): Promise<void> {
     this.paused = false
+    let settings = this.settings
+    for (;;) {
+      const stderr = await this.runOnce(settings)
+      if (stderr === null || this.paused) return
+      const message = classifyYtDlpError(stderr)
+      // an unreadable Chrome login should not block public videos: try again without it
+      if (settings.useChromeCookies && message === COOKIE_MESSAGE) {
+        settings = { ...settings, useChromeCookies: false }
+        continue
+      }
+      this.emit('error', new Error(message))
+      return
+    }
+  }
+
+  /** Run yt-dlp once. Resolves null when finished or already reported, else yt-dlp's stderr. */
+  private runOnce(settings: Settings): Promise<string | null> {
+    this.base = 0
+    this.current = null
     return new Promise((resolve) => {
-      const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, this.settings, this.ffmpegDir, this.exec.nodePath)]
+      const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, settings, this.ffmpegDir, this.exec.nodePath)]
       const child = spawn(this.exec.exe, args, { windowsHide: true, env: ytEnv() })
       this.child = child
       let stderr = ''
@@ -238,18 +275,19 @@ export class YtDlpDownload extends EventEmitter {
       child.stderr.on('data', (chunk: string) => (stderr += chunk))
       child.on('error', (e) => {
         if (!this.paused) this.emit('error', new Error(`Could not start yt-dlp: ${e.message}`))
-        resolve()
+        resolve(null)
       })
       child.on('close', (code) => {
         this.child = null
-        if (this.paused) return resolve()
+        if (this.paused) return resolve(null)
         const path = finalPath ?? (seenPath && fileSize(seenPath) !== null ? seenPath : null)
         if (code === 0 && path) {
           const size = fileSize(path)
           if (size !== null) this.emit('progress', { received: size, total: size, speedBps: 0 })
           this.emit('done', path)
-        } else this.emit('error', new Error(classifyYtDlpError(stderr)))
-        resolve()
+          return resolve(null)
+        }
+        resolve(stderr)
       })
     })
   }

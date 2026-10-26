@@ -50,6 +50,16 @@ describe('classifyYtDlpError', () => {
     expect(classifyYtDlpError('ERROR: unable to download video data: HTTP Error 403: Forbidden')).toBe(upd)
     expect(classifyYtDlpError('ERROR: [youtube] a: Unable to extract initial player response')).toBe(upd)
   })
+  it('explains a Chrome login that cannot be read', () => {
+    const msg = classifyYtDlpError(
+      'ERROR: Could not copy Chrome cookie database. See  https://github.com/yt-dlp/yt-dlp/issues/7271  for more info'
+    )
+    expect(msg).toBe(
+      'Could not read your Chrome login (Chrome keeps it locked). Turn off "Use my Chrome login" in Settings, or fully close Chrome and retry.'
+    )
+    expect(classifyYtDlpError('ERROR: Failed to decrypt with DPAPI. See  https://github.com/yt-dlp/yt-dlp/issues/10927')).toBe(msg)
+  })
+
   it('reports unavailable videos', () => {
     expect(classifyYtDlpError('ERROR: [youtube] a: Video unavailable')).toBe('Video unavailable')
   })
@@ -107,6 +117,16 @@ describe('probe', () => {
       delete process.env.FAKE_YTDLP_LOG
     }
     await expect(probe('https://www.youtube.com/watch?v=fail', settings, fake)).rejects.toThrow(/Sign-in required/)
+  })
+
+  it('retries without the Chrome login when Chrome cookies cannot be read', async () => {
+    process.env.FAKE_COOKIE_FAIL = '1'
+    try {
+      const info = await probe('https://www.youtube.com/watch?v=abc', { ...settings, useChromeCookies: true }, fake)
+      expect(info.kind).toBe('video')
+    } finally {
+      delete process.env.FAKE_COOKIE_FAIL
+    }
   })
 
   it('gives yt-dlp a JavaScript runtime when one is configured', async () => {
@@ -186,6 +206,39 @@ describe('YtDlpDownload', () => {
       delete process.env.FAKE_YTDLP_OUT
     }
     expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1000 }))
+  })
+})
+
+describe('YtDlpDownload with an unreadable Chrome login', () => {
+  it('downloads without the login instead of failing', async () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'raftaaro-ytd-')), 'v.mp4')
+    process.env.FAKE_YTDLP_OUT = out
+    process.env.FAKE_COOKIE_FAIL = '1'
+    const job = {
+      id: 'j',
+      kind: 'video' as const,
+      url: 'https://youtu.be/x',
+      title: 'x',
+      savePath: dirname(out),
+      status: 'queued' as const,
+      totalBytes: null,
+      receivedBytes: 0,
+      speedBps: 0,
+      etaSec: null,
+      createdAt: 0
+    }
+    const d = new YtDlpDownload(job, { ...settings, useChromeCookies: true }, fake, 'C:\\bin')
+    const done = new Promise<string>((resolve, reject) => {
+      d.on('done', resolve)
+      d.on('error', reject)
+    })
+    try {
+      await d.start()
+      expect(await done).toBe(out)
+    } finally {
+      delete process.env.FAKE_YTDLP_OUT
+      delete process.env.FAKE_COOKIE_FAIL
+    }
   })
 })
 

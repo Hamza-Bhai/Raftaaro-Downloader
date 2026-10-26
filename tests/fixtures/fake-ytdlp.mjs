@@ -9,6 +9,13 @@ const args = process.argv.slice(2)
 if (process.env.FAKE_YTDLP_LOG) appendFileSync(process.env.FAKE_YTDLP_LOG, JSON.stringify(args) + '\n')
 const url = args[args.length - 1]
 
+if (process.env.FAKE_COOKIE_FAIL && args.includes('--cookies-from-browser')) {
+  process.stderr.write(
+    'ERROR: Could not copy Chrome cookie database. See  https://github.com/yt-dlp/yt-dlp/issues/7271  for more info\n'
+  )
+  process.exit(1)
+}
+
 if (args.includes('--progress-template')) {
   const out = process.env.FAKE_YTDLP_OUT
   if (process.env.FAKE_YTDLP_EXISTING) {
