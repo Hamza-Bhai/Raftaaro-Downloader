@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "IDM-Downloader",
+  "version": "1.0.0",
+  "description": "YouTube aur doosri sites se IDM-Downloader app mein ek click mein download bhejein.",
+  "permissions": ["contextMenus", "storage"],
+  "host_permissions": ["http://127.0.0.1:47821/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["youtube.js"],
+      "css": ["youtube.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_popup": "popup.html", "default_title": "IDM-Downloader" },
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" }
+}

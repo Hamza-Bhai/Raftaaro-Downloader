@@ -140,6 +140,7 @@ window.addEventListener('focus', async () => {
   banner.querySelector('#bNo')!.addEventListener('click', () => (banner.hidden = true))
 })
 
+window.idm.onIncomingLink((url) => void startDownload(url))
 window.idm.onUpdate(upsert)
 window.idm.onRemoved(drop)
 const initial = await window.idm.list()

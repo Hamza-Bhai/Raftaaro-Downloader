@@ -27,7 +27,8 @@ const idm = {
   updateYtDlp: (): Promise<{ version: string } | { error: string }> => ipcRenderer.invoke('ytdlp:update'),
   readClipboardLink: (): Promise<string | null> => ipcRenderer.invoke('clipboard:link'),
   onUpdate: (cb: (job: Job) => void): (() => void) => subscribe('jobs:update', cb),
-  onRemoved: (cb: (id: string) => void): (() => void) => subscribe('jobs:removed', cb)
+  onRemoved: (cb: (id: string) => void): (() => void) => subscribe('jobs:removed', cb),
+  onIncomingLink: (cb: (url: string) => void): (() => void) => subscribe('link:incoming', cb)
 }
 
 export type IdmApi = typeof idm

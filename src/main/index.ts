@@ -5,6 +5,7 @@ import { Store } from './store'
 import { DownloadQueue, type Runner } from './queue'
 import { HttpDownload } from './http/http-download'
 import { registerIpc } from './ipc'
+import { LOCAL_API_PORT, startLocalApi } from './local-api'
 import { YtDlpDownload } from './video/ytdlp'
 import { binDir, binPath } from './video/bins'
 import type { Job } from '../shared/types'
@@ -66,6 +67,21 @@ app.whenReady().then(() => {
   registerIpc({ queue, store, window: () => mainWindow })
 
   createWindow()
+
+  startLocalApi({
+    port: LOCAL_API_PORT,
+    token: store.getSettings().apiToken,
+    onLink: (url) => {
+      if (!mainWindow) createWindow()
+      const win = mainWindow!
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
+      const deliver = (): void => win.webContents.send('link:incoming', url)
+      if (win.webContents.isLoading()) win.webContents.once('did-finish-load', deliver)
+      else deliver()
+    }
+  }).catch((e: Error) => console.error(`Local API not started on port ${LOCAL_API_PORT}: ${e.message}`))
 })
 
 app.on('window-all-closed', () => {

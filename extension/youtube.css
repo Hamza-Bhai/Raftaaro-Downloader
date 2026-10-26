@@ -1,0 +1,40 @@
+.idm-btn {
+  background: #3b82f6;
+  color: #fff;
+  border: 0;
+  border-radius: 18px;
+  height: 36px;
+  padding: 0 16px;
+  margin-right: 8px;
+  font: 500 14px Roboto, Arial, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.idm-btn:hover {
+  background: #2563eb;
+}
+
+.idm-btn:disabled {
+  opacity: 0.6;
+}
+
+.idm-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  padding: 10px 18px;
+  border-radius: 8px;
+  color: #fff;
+  font: 14px Roboto, Arial, sans-serif;
+}
+
+.idm-toast.ok {
+  background: #166534;
+}
+
+.idm-toast.err {
+  background: #991b1b;
+}

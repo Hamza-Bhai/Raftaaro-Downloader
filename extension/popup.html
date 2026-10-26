@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        width: 280px;
+        margin: 0;
+        padding: 14px;
+        background: #1e1f26;
+        color: #eee;
+        font: 13px 'Segoe UI', sans-serif;
+      }
+      h1 {
+        font-size: 15px;
+        color: #6ea8fe;
+        margin: 0 0 10px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #2b2d36;
+        color: #eee;
+        border: 0;
+        border-radius: 5px;
+        padding: 8px;
+        margin: 6px 0 10px;
+        font: inherit;
+      }
+      button {
+        background: #3b82f6;
+        color: #fff;
+        border: 0;
+        border-radius: 5px;
+        padding: 7px 12px;
+        cursor: pointer;
+      }
+      #test {
+        background: #2b2d36;
+      }
+      .hint,
+      #msg {
+        color: #9a9aa3;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>⬇ IDM-Downloader</h1>
+    <label for="token">App ka token</label>
+    <input id="token" placeholder="App → Settings → token copy karke yahan paste karein" />
+    <button id="save">Save</button>
+    <button id="test">Test connection</button>
+    <div id="msg"></div>
+    <div class="hint">YouTube par video ke neeche "⬇ Download" button aaye ga. Kisi bhi link par right-click karke bhi bhej sakte hain.</div>
+    <script src="popup.js"></script>
+  </body>
+</html>
