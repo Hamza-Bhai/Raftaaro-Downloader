@@ -3,3 +3,5 @@ out
 dist
 resources/bin/*.exe
 .superpowers/
+.eslintcache
+*.log*

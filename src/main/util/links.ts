@@ -1,0 +1,35 @@
+const VIDEO_HOSTS = [
+  'youtube.com',
+  'youtu.be',
+  'facebook.com',
+  'fb.watch',
+  'instagram.com',
+  'tiktok.com',
+  'x.com',
+  'twitter.com',
+  'vimeo.com',
+  'dailymotion.com'
+]
+
+function parseHttpUrl(text: string): URL | null {
+  try {
+    const url = new URL(text)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null
+  } catch {
+    return null
+  }
+}
+
+/** True when the text is exactly one http(s) URL (surrounding whitespace allowed). */
+export function isDownloadableUrl(text: string): boolean {
+  const t = text.trim()
+  return t !== '' && !/\s/.test(t) && parseHttpUrl(t) !== null
+}
+
+/** True when the URL belongs to a site handled by yt-dlp rather than a plain file download. */
+export function isVideoSiteUrl(url: string): boolean {
+  const parsed = parseHttpUrl(url.trim())
+  if (!parsed) return false
+  const host = parsed.hostname.toLowerCase()
+  return VIDEO_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))
+}
