@@ -24,6 +24,7 @@ export class DownloadQueue extends EventEmitter {
   private jobs: Job[]
   private runners = new Map<string, Runner>()
   private lastPersist = 0
+  private halted = false
 
   constructor(
     private readonly store: Store,
@@ -88,8 +89,20 @@ export class DownloadQueue extends EventEmitter {
     this.pump()
   }
 
+  /** Number of jobs currently running. */
+  activeCount(): number {
+    return this.runners.size
+  }
+
+  /** Pause every running job and start nothing new; used when the app quits. */
+  pauseAll(): void {
+    this.halted = true
+    for (const id of [...this.runners.keys()]) this.pause(id)
+  }
+
   /** Start queued jobs, oldest first, up to the configured limit. */
   private pump(): void {
+    if (this.halted) return
     const max = this.store.getSettings().maxConcurrent
     for (const job of this.jobs) {
       if (this.runners.size >= max) break

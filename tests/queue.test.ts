@@ -113,6 +113,17 @@ describe('DownloadQueue', () => {
     expect(existsSync(dir)).toBe(true)
   })
 
+  it('counts active jobs and pauses them all before quitting', () => {
+    const { queue, runners } = setup()
+    const jobs = [1, 2, 3, 4].map((n) => queue.add(input(n)))
+    expect(queue.activeCount()).toBe(3)
+    queue.pauseAll()
+    expect(queue.activeCount()).toBe(0)
+    expect(jobs.slice(0, 3).every((j) => runners.get(j.id)!.paused === 1)).toBe(true)
+    // nothing new starts while pausing everything, and queued jobs stay queued for next time
+    expect(queue.list().map((j) => j.status)).toEqual(['paused', 'paused', 'paused', 'queued'])
+  })
+
   it('persists jobs to the store', () => {
     const { store, queue } = setup()
     queue.add(input(1))
