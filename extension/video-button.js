@@ -1,5 +1,5 @@
-// Adds a "⬇ Download" button on Instagram and Facebook videos (feed posts, reels, single posts).
-// Both sites lay transparent play/pause layers over their videos, which swallow clicks on anything placed
+// Adds a "⬇ Download" button on Instagram and Facebook videos (feed posts, reels, single posts) and YouTube Shorts.
+// These sites lay transparent play/pause layers over their videos, which swallow clicks on anything placed
 // inside the video's box (and hide the right-click "video" menu). So there is one button on the page's top
 // layer instead, kept over the corner of whichever video is most visible.
 const BTN_CLASS = 'raftaaro-video-btn'
@@ -40,7 +40,17 @@ function facebookUrl(url) {
   return null
 }
 
-const linkOf = location.hostname.endsWith('instagram.com') ? instagramUrl : facebookUrl
+/** A YouTube Short, e.g. https://www.youtube.com/shorts/ABC */
+function youtubeShortUrl(url) {
+  const m = /^\/shorts\/([\w-]+)/.exec(url.pathname)
+  return m ? { url: `https://www.youtube.com/shorts/${m[1]}`, rank: 0 } : null
+}
+
+const host = location.hostname
+const onYouTube = host.endsWith('youtube.com')
+const linkOf = host.endsWith('instagram.com') ? instagramUrl : onYouTube ? youtubeShortUrl : facebookUrl
+/** On YouTube only Shorts get this button; watch pages have one under the video (youtube.js). */
+const active = () => !onYouTube || location.pathname.startsWith('/shorts/')
 
 /** The best video link among `anchors`, or null. */
 function bestLink(anchors) {
@@ -60,6 +70,8 @@ function bestLink(anchors) {
 
 /** The post a video belongs to: the nearest surely-a-video link around it, else the page itself. */
 function urlFor(video) {
+  // the Shorts player swaps videos in place and links to other Shorts nearby, so the address is the truth
+  if (onYouTube) return linkOf(new URL(location.href))?.url ?? null
   let post = null
   let el = video.parentElement
   for (let depth = 0; el && el !== document.body && depth < MAX_DEPTH; depth++, el = el.parentElement) {
@@ -116,7 +128,7 @@ btn.addEventListener('click', async (e) => {
 /** Put the button on the top-right corner of the most visible video, or hide it. */
 function place() {
   let best = null
-  for (const v of document.querySelectorAll('video')) {
+  for (const v of active() ? document.querySelectorAll('video') : []) {
     const r = visibleRect(v)
     if (r && (!best || r.area > best.r.area)) best = { v, r }
   }

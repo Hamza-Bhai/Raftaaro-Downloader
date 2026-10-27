@@ -1,11 +1,10 @@
-// Adds a "⬇ Download" button next to YouTube's like/share buttons.
+// Adds a "⬇ Download" button next to YouTube's like/share buttons. Shorts get the floating button (video-button.js).
 const BTN_ID = 'raftaaro-download-btn'
 
 function videoUrl() {
   const u = new URL(location.href)
   if (u.pathname === '/watch' && u.searchParams.get('v'))
     return `https://www.youtube.com/watch?v=${u.searchParams.get('v')}`
-  if (u.pathname.startsWith('/shorts/')) return u.origin + u.pathname
   return null
 }
 
@@ -24,8 +23,7 @@ function inject() {
   if (existing) return
   const bar =
     document.querySelector('ytd-watch-metadata #top-level-buttons-computed') ||
-    document.querySelector('#actions #top-level-buttons-computed') ||
-    document.querySelector('ytd-reel-player-overlay-renderer #actions')
+    document.querySelector('#actions #top-level-buttons-computed')
   if (!bar) return
   const btn = document.createElement('button')
   btn.id = BTN_ID
