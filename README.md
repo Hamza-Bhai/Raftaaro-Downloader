@@ -6,6 +6,8 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)](#download-and-install-no-coding-needed)
 [![License: MIT](https://img.shields.io/github/license/Hamza-Bhai/Raftaaro-Downloader)](LICENSE)
 
+https://github.com/user-attachments/assets/c466fd08-4d80-41b3-9966-6441420455ae
+
 A free, open-source download manager for Windows. It downloads ordinary files over several connections at once, and videos and audio from YouTube, Instagram, Facebook and other sites through [yt-dlp](https://github.com/yt-dlp/yt-dlp). A Chrome extension sends links to the app in one click.
 
 Built with Electron and TypeScript.
