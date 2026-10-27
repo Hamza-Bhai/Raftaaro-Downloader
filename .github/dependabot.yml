@@ -5,6 +5,13 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint does not support TypeScript 7 yet, so lint breaks.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      # Must match the Node version bundled with Electron (Node 24 in Electron 45).
+      - dependency-name: '@types/node'
+        update-types: [version-update:semver-major]
     groups:
       # One pull request for all minor and patch updates instead of one per package.
       minor-and-patch:
