@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
-import { readdirSync, rmSync, statSync } from 'node:fs'
+import { readdirSync, statSync } from 'node:fs'
+import { rm } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
 import type { Job, JobStatus } from '../shared/types'
 import type { Store } from './store'
@@ -80,20 +81,20 @@ export class DownloadQueue extends EventEmitter {
     this.pump()
   }
 
-  remove(id: string, deleteFile: boolean): void {
+  /** Drops the job at once; resolves when its files are deleted (as far as possible). */
+  async remove(id: string, deleteFile: boolean): Promise<void> {
     const job = this.find(id)
     if (!job) return
     this.runners.get(id)?.pause()
     this.runners.delete(id)
     this.jobs = this.jobs.filter((j) => j !== job)
-    if (deleteFile) {
-      if (isFile(job.savePath)) rmSync(job.savePath, { force: true })
-      rmSync(`${job.savePath}.rpart`, { recursive: true, force: true })
-      for (const f of job.partFiles ?? []) removePartFile(f)
-    }
     this.persist()
     this.emit('removed', id)
     this.pump()
+    if (!deleteFile) return
+    const files = (job.partFiles ?? []).flatMap(partFileLeftovers)
+    if (isFile(job.savePath)) files.push(job.savePath)
+    await Promise.all([removeWhenFree(`${job.savePath}.rpart`, true), ...files.map((f) => removeWhenFree(f, false))])
   }
 
   /** Number of jobs currently running. */
@@ -213,18 +214,32 @@ export class DownloadQueue extends EventEmitter {
   }
 }
 
-/** Delete a file yt-dlp was writing plus its .part/.ytdl/fragment/merge leftovers. */
-function removePartFile(file: string): void {
+/** A file yt-dlp was writing plus its .part/.ytdl/fragment/merge leftovers. */
+function partFileLeftovers(file: string): string[] {
   const ext = extname(file)
   const temp = `${file.slice(0, file.length - ext.length)}.temp${ext}`
-  for (const f of [file, `${file}.part`, `${file}.ytdl`, temp]) rmSync(f, { force: true })
   const frag = `${basename(file)}.part-Frag`
+  let frags: string[] = []
   try {
-    for (const name of readdirSync(dirname(file))) {
-      if (name.startsWith(frag)) rmSync(join(dirname(file), name), { force: true })
-    }
+    frags = readdirSync(dirname(file))
+      .filter((name) => name.startsWith(frag))
+      .map((name) => join(dirname(file), name))
   } catch {
     // the folder is gone already
+  }
+  return [file, `${file}.part`, `${file}.ytdl`, temp, ...frags]
+}
+
+/**
+ * Delete a file or folder without blocking the app. A download that was just stopped can still
+ * hold its file open for a moment (Windows then refuses with EPERM/EBUSY), so keep retrying;
+ * a file that stays locked is left behind rather than failing the removal.
+ */
+async function removeWhenFree(path: string, recursive: boolean): Promise<void> {
+  try {
+    await rm(path, { recursive, force: true, maxRetries: 10, retryDelay: 200 })
+  } catch (e) {
+    console.error(`Could not delete ${path}: ${e instanceof Error ? e.message : String(e)}`)
   }
 }
 

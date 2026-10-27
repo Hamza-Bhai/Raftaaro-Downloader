@@ -97,24 +97,24 @@ describe('DownloadQueue', () => {
     expect(j.error).toBe('HTTP 404')
   })
 
-  it('remove with deleteFile deletes savePath and parts but never a folder', () => {
+  it('remove with deleteFile deletes savePath and parts but never a folder', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'raftaaro-rm-'))
     const file = join(dir, 'a.zip')
     writeFileSync(file, 'x')
     mkdirSync(`${file}.rpart`)
     const { queue } = setup()
     const job = queue.add({ ...input(1), savePath: file })
-    queue.remove(job.id, true)
+    await queue.remove(job.id, true)
     expect(existsSync(file)).toBe(false)
     expect(existsSync(`${file}.rpart`)).toBe(false)
     expect(queue.list()).toEqual([])
 
     const job2 = queue.add({ ...input(2), savePath: dir })
-    queue.remove(job2.id, true)
+    await queue.remove(job2.id, true)
     expect(existsSync(dir)).toBe(true)
   })
 
-  it("removing an unfinished video deletes yt-dlp's partial files", () => {
+  it("removing an unfinished video deletes yt-dlp's partial files", async () => {
     const dir = mkdtempSync(join(tmpdir(), 'raftaaro-rmv-'))
     const video = join(dir, 'v [x].f1.mp4')
     const audio = join(dir, 'v [x].f2.m4a')
@@ -128,10 +128,30 @@ describe('DownloadQueue', () => {
     const r = runners.get(job.id)!
     for (const p of [video, audio, merged, video]) r.emit('part', p)
     expect(queue.list()[0].partFiles).toEqual([video, audio, merged])
-    queue.remove(job.id, true)
+    await queue.remove(job.id, true)
     for (const f of leftovers) expect(existsSync(f)).toBe(false)
     expect(existsSync(keep)).toBe(true)
     expect(existsSync(dir)).toBe(true)
+  })
+
+  it('still removes the job when a partial file cannot be deleted', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'raftaaro-rml-'))
+    const video = join(dir, 'v.f1.mp4')
+    // a non-empty folder where a file is expected: deleting it fails, like a file yt-dlp still holds open
+    mkdirSync(`${video}.part`)
+    writeFileSync(join(`${video}.part`, 'x'), 'x')
+    const audio = join(dir, 'v.f2.m4a')
+    writeFileSync(audio, 'x')
+    const { queue, runners, store } = setup()
+    const removed: string[] = []
+    queue.on('removed', (id: string) => removed.push(id))
+    const job = queue.add({ ...input(1), kind: 'video', savePath: dir })
+    runners.get(job.id)!.emit('part', video)
+    runners.get(job.id)!.emit('part', audio)
+    await expect(queue.remove(job.id, true)).resolves.toBeUndefined()
+    expect(removed).toEqual([job.id])
+    expect(store.getJobs()).toEqual([])
+    expect(existsSync(audio)).toBe(false)
   })
 
   it('forgets partial files once a video is done', () => {
