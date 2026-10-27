@@ -31,10 +31,11 @@ export async function renderSettings(root: HTMLElement): Promise<void> {
     </div>
     <div class="setting">
       <label class="label"><input type="checkbox" id="sExtLogin" ${s.useExtensionLogin ? 'checked' : ''} />
-        Use my YouTube login from the extension (recommended)</label>
-      <div class="hint">When you send a YouTube video from Chrome, the extension also gives Raftaaro your YouTube login.
-        YouTube then sees a signed-in viewer instead of a bot, which avoids "slow down" blocks. It stays on this
-        computer and is only used for YouTube.</div>
+        Use my YouTube, Instagram and Facebook login from the extension (recommended)</label>
+      <div class="hint">When you send a video from Chrome, the extension also gives Raftaaro your login for these sites.
+        YouTube then sees a signed-in viewer instead of a bot, which avoids "slow down" blocks, and Instagram and
+        Facebook videos that need a login can be downloaded. It stays on this computer and is only used for these
+        three sites.</div>
     </div>
     <div class="setting">
       <label class="label"><input type="checkbox" id="sCookies" ${s.useChromeCookies ? 'checked' : ''} />

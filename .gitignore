@@ -5,3 +5,11 @@ resources/bin/*.exe
 .superpowers/
 .eslintcache
 *.log*
+
+# local secrets and OS clutter
+.env
+.env.*
+*.pem
+*.pfx
+Thumbs.db
+.DS_Store

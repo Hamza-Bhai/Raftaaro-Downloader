@@ -4,6 +4,15 @@
   "description": "Raftaaro — a free, open source download manager with multi-connection downloads and YouTube/video support",
   "main": "./out/main/index.js",
   "author": "Hamza Pervaiz",
+  "license": "MIT",
+  "homepage": "https://github.com/Hamza-Bhai/Raftaaro-Downloader#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hamza-Bhai/Raftaaro-Downloader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hamza-Bhai/Raftaaro-Downloader/issues"
+  },
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
