@@ -34,6 +34,8 @@ function statusLine(job: Job, youtubeCooldown: number): string {
     case 'probing':
       return 'Getting info…'
     case 'merging':
+      // for audio, ffmpeg turns the downloaded stream into the chosen format instead of joining two
+      if (job.choice?.media === 'audio') return `Converting to ${(job.choice.audioFormat ?? 'mp3').toUpperCase()}…`
       return 'Joining video and audio…'
     case 'paused':
       return `Paused${pct !== null ? ` · ${pct}%` : ''}${size ? ` · ${size}` : ''}`
