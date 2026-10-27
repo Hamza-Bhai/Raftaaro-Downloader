@@ -1,0 +1,63 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For a security problem, do not use this form; see SECURITY.md.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Paste this link: ...
+        2. Choose 1080p
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link (if public)
+      description: The video or file link you tried. Leave it out if it is private.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      options:
+        - YouTube
+        - Instagram
+        - Facebook
+        - TikTok
+        - Another video site
+        - Normal file download
+        - Chrome extension
+        - Installer or updates
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Raftaaro version
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 23H2
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error message or screenshot
+      description: Paste any error text, or drag a screenshot here.

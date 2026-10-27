@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One pull request for all minor and patch updates instead of one per package.
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore
