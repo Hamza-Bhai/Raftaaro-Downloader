@@ -243,11 +243,11 @@ export class HttpDownload extends EventEmitter {
     if (count === 1) {
       renameSync(join(stateDir, 'part-0'), tmp)
     } else {
-      const out = createWriteStream(tmp)
-      for (let i = 0; i < count; i++) {
-        await pipeline(createReadStream(join(stateDir, `part-${i}`)), out, { end: false })
-      }
-      await new Promise<void>((resolve, reject) => out.end((err?: Error | null) => (err ? reject(err) : resolve())))
+      // one pipeline per part would pile listeners onto the shared output stream
+      const parts = (async function* () {
+        for (let i = 0; i < count; i++) yield* createReadStream(join(stateDir, `part-${i}`))
+      })()
+      await pipeline(parts, createWriteStream(tmp))
     }
     renameSync(tmp, this.finalPath)
     rmSync(stateDir, { recursive: true, force: true })

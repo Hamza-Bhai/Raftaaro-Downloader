@@ -172,8 +172,10 @@ describe('YtDlpDownload', () => {
     const d = new YtDlpDownload(job, settings, fake, 'C:\\bin')
     const progress: { received: number; total: number | null }[] = []
     const statuses: string[] = []
+    const parts: string[] = []
     d.on('progress', (p) => progress.push(p))
     d.on('status', (s) => statuses.push(s))
+    d.on('part', (p) => parts.push(p))
     const done = new Promise<string>((resolve, reject) => {
       d.on('done', resolve)
       d.on('error', reject)
@@ -187,6 +189,8 @@ describe('YtDlpDownload', () => {
     // second stream continues after the first one's 1000 bytes
     expect(progress).toContainEqual(expect.objectContaining({ received: 1200, total: 1400 }))
     expect(statuses).toEqual(['merging'])
+    // files yt-dlp writes, so removing an unfinished download can clean them up
+    expect(parts).toEqual(['v.f1.mp4', 'v.f2.m4a', 'v.mp4'])
     expect(progress.at(-1)).toEqual(expect.objectContaining({ received: 1234, total: 1234 }))
   })
 })
@@ -242,6 +246,11 @@ describe('YtDlpDownload total size', () => {
   it('never shows a total below what was already received', async () => {
     const progress = await progressOf({ FAKE_YTDLP_SIZE: '600' }, null)
     for (const p of progress) expect(p.total).toBeGreaterThanOrEqual(p.received)
+  })
+
+  it('shows no speed while yt-dlp waits between streams', async () => {
+    const progress = await progressOf({}, null)
+    expect(progress).toContainEqual({ received: 1000, total: 1000, speedBps: 0 })
   })
 
   it('counts a stream finished in an earlier run after resuming', async () => {

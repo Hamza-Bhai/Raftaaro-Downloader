@@ -242,6 +242,8 @@ export class YtDlpDownload extends EventEmitter {
   private current: YtProgress | null = null
   /** Size of the whole download from yt-dlp, else the quality dialog's estimate. */
   private expected: number | null = null
+  /** Total sent with the last progress event; undefined before the first one. */
+  private total: number | null | undefined = undefined
 
   constructor(
     private readonly job: Job,
@@ -274,6 +276,7 @@ export class YtDlpDownload extends EventEmitter {
     this.base = 0
     this.current = null
     this.expected = this.job.totalBytes
+    this.total = undefined
     return new Promise((resolve) => {
       const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, settings, this.ffmpegDir, this.exec)]
       const child = spawn(this.exec.exe, args, { windowsHide: true, env: ytEnv() })
@@ -332,19 +335,33 @@ export class YtDlpDownload extends EventEmitter {
       return
     }
     if (/^\[(Merger|ExtractAudio|VideoConvertor|FixupM3u8|VideoRemuxer)\]/.test(line)) {
+      const out = pathFromLine(line)
+      if (out) this.emit('part', out)
       this.emit('status', 'merging')
       return
     }
     // a stream finished in an earlier run (e.g. the video, before a pause) still counts as received
     const done = ALREADY_DOWNLOADED.exec(line)
     if (done) {
-      this.base += fileSize(done[1].trim()) ?? 0
+      const path = done[1].trim()
+      // only a single format's file (name.f137.mp4); the finished download itself is not a leftover
+      if (/\.f\d+\.\w+$/.test(path)) this.emit('part', path)
+      this.base += fileSize(path) ?? 0
       this.current = null
       return
     }
-    if (line.startsWith('[download] Destination:') && this.current) {
-      this.base += this.current.totalBytes ?? this.current.downloaded
-      this.current = null
+    const dest = /^\[download\] Destination: (.+)$/.exec(line)
+    if (dest) {
+      this.emit('part', dest[1].trim())
+      if (this.current) {
+        this.base += this.current.totalBytes ?? this.current.downloaded
+        this.current = null
+      }
+      this.idle()
+      return
+    }
+    if (line.startsWith('[download] Sleeping')) {
+      this.idle()
       return
     }
     const p = parseProgress(line)
@@ -354,7 +371,13 @@ export class YtDlpDownload extends EventEmitter {
     // the streams seen so far are a lower bound; the expected size also covers streams still to come
     const seen = this.base + (p.totalBytes ?? p.downloaded)
     const known = p.totalBytes !== null || this.expected !== null
-    const total = known ? Math.max(seen, this.expected ?? 0) : null
-    this.emit('progress', { received, total, speedBps: p.speedBps ?? 0 })
+    this.total = known ? Math.max(seen, this.expected ?? 0) : null
+    this.emit('progress', { received, total: this.total, speedBps: p.speedBps ?? 0 })
+  }
+
+  /** Between streams yt-dlp downloads nothing for a few seconds; do not keep showing the old speed. */
+  private idle(): void {
+    if (this.total === undefined) return
+    this.emit('progress', { received: this.base + (this.current?.downloaded ?? 0), total: this.total, speedBps: 0 })
   }
 }

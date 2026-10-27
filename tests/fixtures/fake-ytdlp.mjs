@@ -40,6 +40,7 @@ if (args.includes('--progress-template')) {
   const lines = [
     ...size,
     ...video,
+    '[download] Sleeping 3.00 seconds ...',
     '[download] Destination: v.f2.m4a',
     'RFTP 200 400 NA 100 2',
     '[Merger] Merging formats into "v.mp4"'

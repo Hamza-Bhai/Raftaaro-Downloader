@@ -36,6 +36,8 @@ export interface Job {
   attempts?: number
   /** When a rate-limited job may start again (epoch ms). */
   retryAt?: number
+  /** Files yt-dlp is writing for an unfinished video, deleted when the job is removed. */
+  partFiles?: string[]
 }
 
 export interface Settings {

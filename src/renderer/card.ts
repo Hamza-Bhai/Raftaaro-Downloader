@@ -1,5 +1,6 @@
 import type { Job } from '../shared/types'
 import { formatBytes, formatEta } from '../shared/format'
+import { isYouTubeUrl } from '../shared/links'
 
 const FILE_ICONS: [RegExp, string][] = [
   [/\.(mp4|mkv|webm|avi|mov|flv)$/i, '🎬'],
@@ -15,14 +16,19 @@ function icon(job: Job): string {
   return FILE_ICONS.find(([re]) => re.test(job.title))?.[1] ?? '📁'
 }
 
-function statusLine(job: Job): string {
+const clock = (ms: number): string => new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+function statusLine(job: Job, youtubeCooldown: number): string {
   const size = job.totalBytes ? formatBytes(job.totalBytes) : ''
-  const pct = job.totalBytes ? Math.floor((job.receivedBytes / job.totalBytes) * 100) : null
+  const pct = job.totalBytes ? Math.min(100, Math.floor((job.receivedBytes / job.totalBytes) * 100)) : null
   switch (job.status) {
     case 'queued':
       if (job.retryAt && job.retryAt > Date.now()) {
-        const at = new Date(job.retryAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        return `⏳ YouTube asked us to slow down — retrying at ${at}`
+        return `⏳ YouTube asked us to slow down — retrying at ${clock(job.retryAt)}`
+      }
+      // another video was rate limited; every YouTube download waits for that cooldown
+      if (isYouTubeUrl(job.url) && youtubeCooldown > Date.now()) {
+        return `⏳ Waiting — YouTube pause until ${clock(youtubeCooldown)}`
       }
       return 'Waiting…'
     case 'probing':
@@ -87,7 +93,8 @@ export function renderCard(job: Job, h: CardHandlers): HTMLElement {
   return el
 }
 
-export function updateCard(el: HTMLElement, job: Job): void {
+/** `youtubeCooldown`: when rate-limited YouTube downloads may start again (epoch ms), or 0. */
+export function updateCard(el: HTMLElement, job: Job, youtubeCooldown = 0): void {
   el.dataset.status = job.status
   el.className = `card ${job.status}`
   const unknownTotal = job.status === 'downloading' && !job.totalBytes
@@ -103,7 +110,7 @@ export function updateCard(el: HTMLElement, job: Job): void {
   el.querySelector('.title')!.textContent = job.title
   const pct = job.status === 'done' ? 100 : job.totalBytes ? (job.receivedBytes / job.totalBytes) * 100 : 0
   el.querySelector<HTMLElement>('.bar > div')!.style.width = `${Math.min(100, pct)}%`
-  el.querySelector('.meta')!.textContent = statusLine(job)
+  el.querySelector('.meta')!.textContent = statusLine(job, youtubeCooldown)
 
   const toggle = el.querySelector<HTMLButtonElement>('[data-act="toggle"]')!
   if (job.status === 'done') {

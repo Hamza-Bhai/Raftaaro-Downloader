@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
-import { rmSync, statSync } from 'node:fs'
-import { basename } from 'node:path'
+import { readdirSync, rmSync, statSync } from 'node:fs'
+import { basename, dirname, extname, join } from 'node:path'
 import type { Job, JobStatus } from '../shared/types'
 import type { Store } from './store'
 import { isYouTubeUrl } from '../shared/links'
@@ -9,7 +9,7 @@ import { RATE_LIMIT_MESSAGE } from './video/ytdlp'
 
 /**
  * One running download. Events: `progress({received,total,speedBps})`, `path(finalPath)`,
- * `status('merging')`, `done(finalPath)`, `error(Error)`.
+ * `part(filePath)`, `status('merging')`, `done(finalPath)`, `error(Error)`.
  */
 export interface Runner extends EventEmitter {
   start(): Promise<void>
@@ -89,6 +89,7 @@ export class DownloadQueue extends EventEmitter {
     if (deleteFile) {
       if (isFile(job.savePath)) rmSync(job.savePath, { force: true })
       rmSync(`${job.savePath}.rpart`, { recursive: true, force: true })
+      for (const f of job.partFiles ?? []) removePartFile(f)
     }
     this.persist()
     this.emit('removed', id)
@@ -143,6 +144,10 @@ export class DownloadQueue extends EventEmitter {
       if (!live()) return
       this.set(job, job.kind === 'file' ? { savePath: p, title: basename(p) } : { savePath: p })
     })
+    runner.on('part', (p: string) => {
+      if (!live() || job.partFiles?.includes(p)) return
+      this.set(job, { partFiles: [...(job.partFiles ?? []), p] })
+    })
     runner.on('status', (s: JobStatus) => live() && this.set(job, { status: s }))
     runner.on('progress', (p: { received: number; total: number | null; speedBps: number }) => {
       if (!live()) return
@@ -158,6 +163,7 @@ export class DownloadQueue extends EventEmitter {
         status: 'done',
         error: undefined,
         retryAt: undefined,
+        partFiles: undefined,
         savePath: finalPath,
         speedBps: 0,
         etaSec: null,
@@ -204,6 +210,21 @@ export class DownloadQueue extends EventEmitter {
   private persist(): void {
     this.lastPersist = Date.now()
     this.store.saveJobs(this.jobs)
+  }
+}
+
+/** Delete a file yt-dlp was writing plus its .part/.ytdl/fragment/merge leftovers. */
+function removePartFile(file: string): void {
+  const ext = extname(file)
+  const temp = `${file.slice(0, file.length - ext.length)}.temp${ext}`
+  for (const f of [file, `${file}.part`, `${file}.ytdl`, temp]) rmSync(f, { force: true })
+  const frag = `${basename(file)}.part-Frag`
+  try {
+    for (const name of readdirSync(dirname(file))) {
+      if (name.startsWith(frag)) rmSync(join(dirname(file), name), { force: true })
+    }
+  } catch {
+    // the folder is gone already
   }
 }
 

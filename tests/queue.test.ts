@@ -114,6 +114,35 @@ describe('DownloadQueue', () => {
     expect(existsSync(dir)).toBe(true)
   })
 
+  it("removing an unfinished video deletes yt-dlp's partial files", () => {
+    const dir = mkdtempSync(join(tmpdir(), 'raftaaro-rmv-'))
+    const video = join(dir, 'v [x].f1.mp4')
+    const audio = join(dir, 'v [x].f2.m4a')
+    const merged = join(dir, 'v [x].mp4')
+    const leftovers = [video, `${audio}.part`, `${audio}.ytdl`, `${audio}.part-Frag3`, join(dir, 'v [x].temp.mp4')]
+    for (const f of leftovers) writeFileSync(f, 'x')
+    const keep = join(dir, 'other.mp4')
+    writeFileSync(keep, 'x')
+    const { queue, runners } = setup()
+    const job = queue.add({ ...input(1), kind: 'video', savePath: dir })
+    const r = runners.get(job.id)!
+    for (const p of [video, audio, merged, video]) r.emit('part', p)
+    expect(queue.list()[0].partFiles).toEqual([video, audio, merged])
+    queue.remove(job.id, true)
+    for (const f of leftovers) expect(existsSync(f)).toBe(false)
+    expect(existsSync(keep)).toBe(true)
+    expect(existsSync(dir)).toBe(true)
+  })
+
+  it('forgets partial files once a video is done', () => {
+    const { queue, runners } = setup()
+    const job = queue.add({ ...input(1), kind: 'video' })
+    const r = runners.get(job.id)!
+    r.emit('part', 'C:\\dl\\v.f1.mp4')
+    r.emit('done', 'C:\\dl\\v.mp4')
+    expect(queue.list()[0].partFiles).toBeUndefined()
+  })
+
   it('counts active jobs and pauses them all before quitting', () => {
     const { queue, runners } = setup()
     const jobs = [1, 2, 3, 4].map((n) => queue.add(input(n)))

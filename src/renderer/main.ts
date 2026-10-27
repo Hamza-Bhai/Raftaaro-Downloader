@@ -47,16 +47,31 @@ function visible(job: Job): boolean {
   }
 }
 
+/** Mirrors the queue: while one YouTube job waits out a rate limit, all YouTube jobs wait. */
+function youtubeCooldown(): number {
+  return Math.max(0, ...[...jobs.values()].map((j) => (j.status === 'queued' && j.retryAt) || 0))
+}
+
 function upsert(job: Job): void {
+  const cooldownBefore = youtubeCooldown()
   jobs.set(job.id, job)
+  const cooldown = youtubeCooldown()
   let el = cards.get(job.id)
-  if (el) updateCard(el, job)
+  if (el) updateCard(el, job, cooldown)
   else {
     el = renderCard(job, handlers)
     cards.set(job.id, el)
     list.prepend(el)
+    updateCard(el, job, cooldown)
   }
   el.hidden = !visible(job)
+  // the other waiting cards say why they wait, so refresh them when the cooldown changes
+  if (cooldown !== cooldownBefore) {
+    for (const [id, other] of cards) {
+      const j = jobs.get(id)!
+      if (id !== job.id && j.status === 'queued') updateCard(other, j, cooldown)
+    }
+  }
   refreshEmpty()
 }
 
