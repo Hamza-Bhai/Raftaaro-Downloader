@@ -1,12 +1,14 @@
-/* Sits on top of Instagram's own layers in the video's corner; base look comes from youtube.css. */
+/* Lives on the page's top layer, above Instagram's click-catching layers; base look comes from youtube.css. */
 .raftaaro-insta-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  position: fixed;
   z-index: 2147483000;
   height: 32px;
   padding: 0 12px;
   margin: 0;
   font: 600 13px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.raftaaro-insta-btn[hidden] {
+  display: none;
 }

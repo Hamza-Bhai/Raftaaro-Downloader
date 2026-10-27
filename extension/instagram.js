@@ -1,7 +1,12 @@
-// Adds a "⬇ Download" button on every Instagram video (feed posts, reels, single posts).
-// Instagram lays transparent layers over its videos, so Chrome's right-click "video" menu never shows there.
+// Adds a "⬇ Download" button on Instagram videos (feed posts, reels, single posts).
+// Instagram lays transparent play/pause layers over its videos, which swallow clicks on anything placed
+// inside the video's box (and hide the right-click "video" menu). So there is one button on the page's top
+// layer instead, kept over the corner of whichever video is most visible.
 const BTN_CLASS = 'raftaaro-insta-btn'
 const POST_PATH = /^\/(?:[\w.]+\/)?(p|reel|reels|tv)\/([\w-]+)/
+/** Videos smaller than this (previews, avatars) get no button. */
+const MIN_SIDE = 150
+const MARGIN = 12
 
 function toast(text, ok) {
   const t = document.createElement('div')
@@ -28,43 +33,68 @@ function urlFor(video) {
   return postUrl(location.pathname)
 }
 
-function addButton(video) {
-  const box = video.parentElement
-  if (!box || box.querySelector(`.${BTN_CLASS}`)) return
-  if (getComputedStyle(box).position === 'static') box.style.position = 'relative'
-  const btn = document.createElement('button')
-  btn.className = `raftaaro-btn ${BTN_CLASS}`
-  btn.textContent = '⬇ Download'
-  btn.title = 'Download with Raftaaro'
-  // keep Instagram from treating the click as play/pause or opening the post
-  for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup']) {
-    btn.addEventListener(type, (e) => e.stopPropagation())
+/** The on-screen part of an element, or null when too little of it is visible. */
+function visibleRect(el) {
+  const r = el.getBoundingClientRect()
+  const left = Math.max(r.left, 0)
+  const top = Math.max(r.top, 0)
+  const right = Math.min(r.right, innerWidth)
+  const bottom = Math.min(r.bottom, innerHeight)
+  if (r.width < MIN_SIDE || r.height < MIN_SIDE || right - left < MIN_SIDE || bottom - top < MIN_SIDE) return null
+  return { left, top, right, bottom, area: (right - left) * (bottom - top) }
+}
+
+let current = null
+
+const btn = document.createElement('button')
+btn.className = `raftaaro-btn ${BTN_CLASS}`
+btn.textContent = '⬇ Download'
+btn.title = 'Download with Raftaaro'
+btn.hidden = true
+// keep Instagram from treating the click as play/pause or opening the post
+for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'touchstart']) {
+  btn.addEventListener(type, (e) => e.stopPropagation())
+}
+btn.addEventListener('click', async (e) => {
+  e.preventDefault()
+  e.stopPropagation()
+  const target = current && urlFor(current)
+  if (!target) return toast('Open the post first, then press Download', false)
+  btn.disabled = true
+  const r = await chrome.runtime.sendMessage({ type: 'add', url: target, title: document.title })
+  btn.disabled = false
+  toast(r?.ok ? 'Sent to Raftaaro ✅' : r?.error || 'Something went wrong', !!r?.ok)
+})
+
+/** Put the button on the top-right corner of the most visible video, or hide it. */
+function place() {
+  let best = null
+  for (const v of document.querySelectorAll('video')) {
+    const r = visibleRect(v)
+    if (r && (!best || r.area > best.r.area)) best = { v, r }
   }
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const target = urlFor(video)
-    if (!target) return toast('Open the post first, then press Download', false)
-    btn.disabled = true
-    const r = await chrome.runtime.sendMessage({ type: 'add', url: target, title: document.title })
-    btn.disabled = false
-    toast(r?.ok ? 'Sent to Raftaaro ✅' : r?.error || 'Something went wrong', !!r?.ok)
-  })
-  box.appendChild(btn)
+  current = best?.v ?? null
+  if (!best) {
+    btn.hidden = true
+    return
+  }
+  if (!btn.isConnected) document.body.appendChild(btn)
+  btn.hidden = false
+  btn.style.top = `${best.r.top + MARGIN}px`
+  btn.style.left = `${best.r.right - btn.offsetWidth - MARGIN}px`
 }
 
-function scan() {
-  document.querySelectorAll('video').forEach(addButton)
-}
-
-// Instagram is a single-page app that adds videos while you scroll
+// Instagram scrolls inner panels and swaps videos without page loads; follow all of it cheaply
 let queued = false
-new MutationObserver(() => {
+function schedule() {
   if (queued) return
   queued = true
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     queued = false
-    scan()
-  }, 500)
-}).observe(document.documentElement, { childList: true, subtree: true })
-scan()
+    place()
+  })
+}
+addEventListener('scroll', schedule, { capture: true, passive: true })
+addEventListener('resize', schedule)
+setInterval(schedule, 400)
+schedule()
