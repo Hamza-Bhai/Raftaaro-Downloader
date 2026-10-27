@@ -84,7 +84,8 @@ describe('buildFormatSelector', () => {
   it('prefers widely playable H.264 video and m4a audio at the chosen resolution', () => {
     for (const c of videoChoices) {
       const args = buildFormatSelector(c)
-      expect(args[args.indexOf('-S') + 1]).toBe('res,+codec:avc:m4a')
+      // proto: plain https downloads (known size) beat streamed m3u8 ones of the same height
+      expect(args[args.indexOf('-S') + 1]).toBe('res,proto,+codec:avc:m4a')
     }
   })
 

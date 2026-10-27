@@ -19,6 +19,8 @@ export interface YtDlpExec {
 export interface YtProgress {
   downloaded: number
   totalBytes: number | null
+  /** totalBytes is yt-dlp's guess (streamed formats), which changes as fragments arrive. */
+  estimated: boolean
   speedBps: number | null
   etaSec: number | null
 }
@@ -60,6 +62,7 @@ export function parseProgress(line: string): YtProgress | null {
   return {
     downloaded: num(downloaded) ?? 0,
     totalBytes: num(total) ?? num(estimate),
+    estimated: num(total) === null && num(estimate) !== null,
     speedBps: num(speed),
     etaSec: num(eta)
   }
@@ -221,7 +224,7 @@ export function buildDownloadArgs(
     '--progress-template',
     PROGRESS_TEMPLATE,
     '--print',
-    `before_dl:${SIZE_MARK}%(filesize,filesize_approx)s`,
+    `before_dl:${SIZE_MARK}%(filesize,filesize_approx)s %(tbr)s %(duration)s`,
     '--print',
     `after_move:${FILE_MARK}%(filepath)s`,
     '--no-quiet',
@@ -331,7 +334,10 @@ export class YtDlpDownload extends EventEmitter {
 
   private onLine(line: string): void {
     if (line.startsWith(SIZE_MARK)) {
-      this.expected = num(line.slice(SIZE_MARK.length).trim()) ?? this.expected
+      const [size, tbr, duration] = line.slice(SIZE_MARK.length).trim().split(/\s+/)
+      // streamed formats have no size; bitrate (kbit/s) x duration is a steady estimate
+      const fromRate = Number(tbr) * 125 * Number(duration)
+      this.expected = num(size) ?? (fromRate > 0 ? Math.round(fromRate) : this.expected)
       return
     }
     if (/^\[(Merger|ExtractAudio|VideoConvertor|FixupM3u8|VideoRemuxer)\]/.test(line)) {
@@ -368,9 +374,11 @@ export class YtDlpDownload extends EventEmitter {
     if (!p) return
     this.current = p
     const received = this.base + p.downloaded
-    // the streams seen so far are a lower bound; the expected size also covers streams still to come
-    const seen = this.base + (p.totalBytes ?? p.downloaded)
-    const known = p.totalBytes !== null || this.expected !== null
+    // the streams seen so far are a lower bound; the expected size also covers streams still to come.
+    // yt-dlp's guess for a streamed format jumps around, so it is only used when nothing better is known.
+    const streamTotal = p.estimated && this.expected !== null ? null : p.totalBytes
+    const seen = this.base + (streamTotal ?? p.downloaded)
+    const known = streamTotal !== null || this.expected !== null
     this.total = known ? Math.max(seen, this.expected ?? 0) : null
     this.emit('progress', { received, total: this.total, speedBps: p.speedBps ?? 0 })
   }

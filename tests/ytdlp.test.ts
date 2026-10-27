@@ -20,6 +20,7 @@ describe('parseProgress', () => {
     expect(parseProgress('RFTP 1048576 4194304 NA 524288 6')).toEqual({
       downloaded: 1048576,
       totalBytes: 4194304,
+      estimated: false,
       speedBps: 524288,
       etaSec: 6
     })
@@ -28,6 +29,7 @@ describe('parseProgress', () => {
     expect(parseProgress('RFTP 10 NA 200.5 NA NA')).toEqual({
       downloaded: 10,
       totalBytes: 201,
+      estimated: true,
       speedBps: null,
       etaSec: null
     })
@@ -243,6 +245,19 @@ describe('YtDlpDownload total size', () => {
     expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1400 }))
   })
 
+  it('works the size out from bitrate and duration when yt-dlp has no size', async () => {
+    // 0.008 kbit/s for 1400 s = 1400 bytes
+    const progress = await progressOf({ FAKE_YTDLP_SIZE: 'NA 0.008 1400' }, null)
+    expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1400 }))
+  })
+
+  it("ignores yt-dlp's jumpy guesses for streamed (HLS) formats when the size is known", async () => {
+    const progress = await progressOf({ FAKE_YTDLP_SIZE: '1400', FAKE_YTDLP_HLS: '1' }, null)
+    // the last event is the finished file's real size
+    const during = progress.slice(0, -1)
+    expect(during.map((p) => p.total)).toEqual(during.map(() => 1400))
+  })
+
   it('never shows a total below what was already received', async () => {
     const progress = await progressOf({ FAKE_YTDLP_SIZE: '600' }, null)
     for (const p of progress) expect(p.total).toBeGreaterThanOrEqual(p.received)
@@ -395,7 +410,7 @@ describe('buildDownloadArgs', () => {
     expect(args.indexOf('--no-quiet')).toBeGreaterThan(args.indexOf('--print'))
     expect(args).toContain('--progress')
     // the size of video + audio together, known before the first stream starts
-    expect(args).toContain('before_dl:RFTSIZE %(filesize,filesize_approx)s')
+    expect(args).toContain('before_dl:RFTSIZE %(filesize,filesize_approx)s %(tbr)s %(duration)s')
     expect(args.at(-1)).toBe('https://youtu.be/x')
     expect(args.join(' ')).toContain('bv*[height<=1080]+ba')
   })

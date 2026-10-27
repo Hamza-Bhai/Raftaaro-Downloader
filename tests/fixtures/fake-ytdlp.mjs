@@ -32,6 +32,10 @@ if (args.includes('--progress-template')) {
     'RFTP 500 1000 NA 100 5',
     'RFTP 1000 1000 NA 100 0'
   ]
+  // FAKE_YTDLP_HLS: a streamed format, where yt-dlp only guesses the total and the guess jumps around
+  if (process.env.FAKE_YTDLP_HLS) {
+    video = ['[download] Destination: v.f1.mp4', 'RFTP 500 NA 5000 100 5', 'RFTP 1000 NA 900 100 0']
+  }
   if (process.env.FAKE_YTDLP_RESUME) {
     const part = join(dirname(out), 'v.f1.mp4')
     writeFileSync(part, Buffer.alloc(1000))

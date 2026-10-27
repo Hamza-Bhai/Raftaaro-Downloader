@@ -32,9 +32,9 @@ function estimateForHeight(formats: YtFormat[], height: number, durationSec: num
     .filter((f) => hasVideo(f) && f.height === height)
     .sort(
       (a, b) =>
-        codecRank(a.vcodec) - codecRank(b.vcodec) ||
-        // sized formats are plain https downloads, which yt-dlp prefers over sizeless HLS ones
+        // sized formats are plain https downloads, which -S proto puts before sizeless HLS ones
         Number(sizeOf(b, null) !== null) - Number(sizeOf(a, null) !== null) ||
+        codecRank(a.vcodec) - codecRank(b.vcodec) ||
         (b.tbr ?? 0) - (a.tbr ?? 0)
     )
   const pick = atHeight[0]
@@ -76,7 +76,9 @@ export function buildFormatSelector(choice: VideoChoice): string[] {
     if (choice.audioFormat === 'm4a') return ['-f', 'ba[ext=m4a]/ba/b', '-x', '--audio-format', 'm4a']
     return ['-f', 'ba/b', '-x', '--audio-format', 'mp3', '--audio-quality', '0']
   }
-  const merge = ['-S', 'res,+codec:avc:m4a', '--merge-output-format', 'mp4']
+  // proto: at the same height a plain https download (exact size) beats a streamed m3u8 one,
+  // which YouTube offers with audio included when signed in and which only has a guessed size
+  const merge = ['-S', 'res,proto,+codec:avc:m4a', '--merge-output-format', 'mp4']
   if (choice.height === 'best') return ['-f', 'bv*+ba/b', ...merge]
   const h = choice.height
   return ['-f', `bv*[height<=${h}]+ba/b[height<=${h}]/bv*+ba/b`, ...merge]
