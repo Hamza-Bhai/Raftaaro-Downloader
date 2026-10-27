@@ -1,6 +1,6 @@
 import type { AudioFormat, MediaType, PlaylistInfo } from '../shared/types'
 import { formatDuration } from '../shared/format'
-import { esc, setBody, type DialogHandle } from './dialog'
+import { clampedTitle, esc, setBody, type DialogHandle } from './dialog'
 
 const VIDEO_QUALITIES: { value: number | 'best'; label: string }[] = [
   { value: 'best', label: '⭐ Best' },
@@ -20,7 +20,7 @@ const AUDIO_QUALITIES: { value: AudioFormat; label: string }[] = [
 export async function showPlaylistDialog(d: DialogHandle, info: PlaylistInfo): Promise<void> {
   setBody(
     d,
-    `<b>${esc(info.title)}</b>
+    `${clampedTitle(info.title)}
      <div class="muted">${info.entries.length} videos</div>
      <label style="margin-top:10px"><input type="checkbox" id="pAll" checked /> Select all</label>
      <div class="entries">

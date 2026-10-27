@@ -1,6 +1,6 @@
 import type { MediaType, QualityOption, VideoInfo } from '../shared/types'
 import { formatBytes, formatDuration } from '../shared/format'
-import { esc, setBody, type DialogHandle } from './dialog'
+import { clampedTitle, esc, setBody, type DialogHandle } from './dialog'
 
 /** Fill an open dialog with the quality picker (mockup B) for one video. */
 export async function showQualityDialog(d: DialogHandle, info: VideoInfo): Promise<void> {
@@ -10,7 +10,7 @@ export async function showQualityDialog(d: DialogHandle, info: VideoInfo): Promi
     d,
     `<div class="head">
        <div class="thumb">${info.thumbnail ? '' : '🎬'}</div>
-       <div><b>${esc(info.title)}</b><div class="muted">${esc(meta)}</div></div>
+       <div class="head-text">${clampedTitle(info.title)}<div class="muted">${esc(meta)}</div></div>
      </div>
      <div class="row">
        <div><label>Type</label>

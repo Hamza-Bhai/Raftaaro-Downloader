@@ -295,6 +295,42 @@ main {
 .dialog .head .thumb {
   width: 120px;
   height: 68px;
+  flex-shrink: 0;
+}
+
+.dialog .head-text {
+  min-width: 0;
+}
+
+/* long titles: two lines, then "See more" opens the rest in a scrollable box */
+.clamp-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.clamp.open .clamp-text {
+  display: block;
+  max-height: 180px;
+  overflow-y: auto;
+  white-space: pre-line;
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 2px 0 4px;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.link:hover {
+  text-decoration: underline;
 }
 
 .dialog label {

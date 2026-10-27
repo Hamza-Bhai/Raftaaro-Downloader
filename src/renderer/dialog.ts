@@ -30,4 +30,26 @@ export function openDialog(html: string): DialogHandle {
 
 export function setBody(d: DialogHandle, html: string): void {
   d.el.innerHTML = html
+  wireClamps(d.el)
+}
+
+/**
+ * A title cut to two lines with a "See more" toggle. Some sites (Facebook) give a whole post's text
+ * as the video title, which would otherwise fill the dialog.
+ */
+export function clampedTitle(text: string): string {
+  return `<div class="clamp"><b class="clamp-text">${esc(text)}</b><button class="link clamp-toggle" hidden>See more</button></div>`
+}
+
+/** Show the toggle only where the text really is cut. */
+function wireClamps(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>('.clamp').forEach((box) => {
+    const text = box.querySelector<HTMLElement>('.clamp-text')!
+    const toggle = box.querySelector<HTMLButtonElement>('.clamp-toggle')!
+    toggle.hidden = text.scrollHeight <= text.clientHeight + 1
+    toggle.addEventListener('click', () => {
+      const open = box.classList.toggle('open')
+      toggle.textContent = open ? 'See less' : 'See more'
+    })
+  })
 }
