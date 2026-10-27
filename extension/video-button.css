@@ -1,5 +1,5 @@
-/* Lives on the page's top layer, above Instagram's click-catching layers; base look comes from youtube.css. */
-.raftaaro-insta-btn {
+/* Lives on the page's top layer, above the click-catching layers of Instagram and Facebook; base look comes from youtube.css. */
+.raftaaro-video-btn {
   position: fixed;
   z-index: 2147483000;
   height: 32px;
@@ -9,6 +9,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-.raftaaro-insta-btn[hidden] {
+.raftaaro-video-btn[hidden] {
   display: none;
 }

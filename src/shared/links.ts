@@ -48,7 +48,7 @@ export function isYouTubeUrl(url: string): boolean {
 
 /** Sites whose login the Chrome extension sends along, because they hide videos from signed-out visitors. */
 export function usesExtensionLogin(url: string): boolean {
-  return hostIs(url, ['youtube.com', 'youtu.be', 'instagram.com'])
+  return hostIs(url, ['youtube.com', 'youtu.be', 'instagram.com', 'facebook.com', 'fb.watch'])
 }
 
 /** True when the URL belongs to a site handled by yt-dlp rather than a plain file download. */

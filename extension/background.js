@@ -6,21 +6,21 @@ async function token() {
   return token || ''
 }
 
-/** Sites that hide videos from signed-out visitors (Instagram) or treat them as bots (YouTube). */
-const LOGIN_SITES = ['youtube.com', 'instagram.com']
+/** Sites that hide videos from signed-out visitors (Instagram, Facebook) or treat them as bots (YouTube). */
+const LOGIN_SITES = ['youtube.com', 'instagram.com', 'facebook.com']
 
 function needsLogin(url) {
   try {
     const h = new URL(url).hostname
-    return h === 'youtu.be' || LOGIN_SITES.some((s) => h === s || h.endsWith(`.${s}`))
+    return h === 'youtu.be' || h === 'fb.watch' || LOGIN_SITES.some((s) => h === s || h.endsWith(`.${s}`))
   } catch {
     return false
   }
 }
 
 /**
- * The user's YouTube and Instagram login, so those sites see a signed-in person. Stays on this computer.
- * Both are always sent together: the app keeps one cookie file and replaces it with every link.
+ * The user's YouTube, Instagram and Facebook login, so those sites see a signed-in person. Stays on this
+ * computer. All are always sent together: the app keeps one cookie file and replaces it with every link.
  */
 async function loginCookies() {
   try {

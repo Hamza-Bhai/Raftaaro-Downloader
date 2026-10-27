@@ -10,7 +10,7 @@ export interface BrowserCookie {
   value: string
 }
 
-const ALLOWED_DOMAINS = ['youtube.com', 'google.com', 'instagram.com']
+const ALLOWED_DOMAINS = ['youtube.com', 'google.com', 'instagram.com', 'facebook.com']
 
 function allowed(domain: string): boolean {
   const d = domain.replace(/^\./, '').toLowerCase()
@@ -20,8 +20,8 @@ function allowed(domain: string): boolean {
 const clean = (s: string): boolean => !/[\t\r\n]/.test(s)
 
 /**
- * The YouTube/Instagram login the extension sends, as a Netscape cookie file for `yt-dlp --cookies`.
- * Only YouTube/Google/Instagram cookies are kept, and anything that would break the tab-separated format is dropped.
+ * The YouTube/Instagram/Facebook login the extension sends, as a Netscape cookie file for `yt-dlp --cookies`.
+ * Only YouTube/Google/Instagram/Facebook cookies are kept, and anything that would break the tab-separated format is dropped.
  */
 export function toNetscapeCookies(cookies: BrowserCookie[]): string {
   const lines = ['# Netscape HTTP Cookie File']

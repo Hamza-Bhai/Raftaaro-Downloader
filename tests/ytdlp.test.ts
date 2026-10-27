@@ -355,10 +355,15 @@ describe('YouTube login from the extension', () => {
     const insta = { ...job, url: 'https://www.instagram.com/reel/abc/' }
     expect(cookieArg(buildDownloadArgs(insta, on, 'C:\\bin', { cookieFile }))).toBe(cookieFile)
   })
+  it('uses the saved login for Facebook, whose group and friends-only videos need it', () => {
+    for (const url of ['https://www.facebook.com/watch/?v=1', 'https://fb.watch/abc/']) {
+      expect(cookieArg(buildDownloadArgs({ ...job, url }, on, 'C:\\bin', { cookieFile }))).toBe(cookieFile)
+    }
+  })
   it('does not use it when the setting is off, for other sites, or when no login was saved', () => {
     expect(cookieArg(buildDownloadArgs(job, { ...on, useExtensionLogin: false }, 'C:\\bin', { cookieFile }))).toBeUndefined()
     expect(
-      cookieArg(buildDownloadArgs({ ...job, url: 'https://www.facebook.com/watch?v=1' }, on, 'C:\\bin', { cookieFile }))
+      cookieArg(buildDownloadArgs({ ...job, url: 'https://vimeo.com/1' }, on, 'C:\\bin', { cookieFile }))
     ).toBeUndefined()
     expect(cookieArg(buildDownloadArgs(job, on, 'C:\\bin', { cookieFile: cookieFile + '.missing' }))).toBeUndefined()
   })
