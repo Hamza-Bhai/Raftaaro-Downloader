@@ -351,6 +351,10 @@ describe('YouTube login from the extension', () => {
   it('uses the saved login for YouTube downloads', () => {
     expect(cookieArg(buildDownloadArgs(job, on, 'C:\\bin', { cookieFile }))).toBe(cookieFile)
   })
+  it('uses the saved login for Instagram too, which often hides videos from signed-out visitors', () => {
+    const insta = { ...job, url: 'https://www.instagram.com/reel/abc/' }
+    expect(cookieArg(buildDownloadArgs(insta, on, 'C:\\bin', { cookieFile }))).toBe(cookieFile)
+  })
   it('does not use it when the setting is off, for other sites, or when no login was saved', () => {
     expect(cookieArg(buildDownloadArgs(job, { ...on, useExtensionLogin: false }, 'C:\\bin', { cookieFile }))).toBeUndefined()
     expect(

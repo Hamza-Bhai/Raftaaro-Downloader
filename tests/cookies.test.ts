@@ -22,13 +22,15 @@ describe('toNetscapeCookies', () => {
     )
   })
 
-  it('keeps only YouTube and Google cookies', () => {
+  it('keeps only YouTube, Google and Instagram cookies', () => {
     const text = toNetscapeCookies([
       { ...base, domain: '.google.com', name: 'G' },
+      { ...base, domain: '.instagram.com', name: 'I' },
       { ...base, domain: '.evil.com', name: 'E' },
       { ...base, domain: 'notyoutube.com', name: 'N' }
     ])
     expect(text).toContain('\tG\t')
+    expect(text).toContain('\tI\t')
     expect(text).not.toContain('\tE\t')
     expect(text).not.toContain('\tN\t')
   })

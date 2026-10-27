@@ -6,20 +6,26 @@ async function token() {
   return token || ''
 }
 
-function isYouTube(url) {
+/** Sites that hide videos from signed-out visitors (Instagram) or treat them as bots (YouTube). */
+const LOGIN_SITES = ['youtube.com', 'instagram.com']
+
+function needsLogin(url) {
   try {
     const h = new URL(url).hostname
-    return h === 'youtu.be' || h === 'youtube.com' || h.endsWith('.youtube.com')
+    return h === 'youtu.be' || LOGIN_SITES.some((s) => h === s || h.endsWith(`.${s}`))
   } catch {
     return false
   }
 }
 
-/** The user's YouTube login, so YouTube sees a signed-in person instead of a bot. Stays on this computer. */
-async function youtubeCookies() {
+/**
+ * The user's YouTube and Instagram login, so those sites see a signed-in person. Stays on this computer.
+ * Both are always sent together: the app keeps one cookie file and replaces it with every link.
+ */
+async function loginCookies() {
   try {
-    const list = await chrome.cookies.getAll({ domain: 'youtube.com' })
-    return list.map(({ domain, hostOnly, path, secure, session, expirationDate, name, value }) => ({
+    const lists = await Promise.all(LOGIN_SITES.map((domain) => chrome.cookies.getAll({ domain })))
+    return lists.flat().map(({ domain, hostOnly, path, secure, session, expirationDate, name, value }) => ({
       domain, hostOnly, path, secure, session, expirationDate, name, value
     }))
   } catch {
@@ -35,7 +41,7 @@ async function sendToApp(url, title) {
     const res = await fetch(`${API}/add`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Raftaaro-Token': t },
-      body: JSON.stringify({ url, title, cookies: isYouTube(url) ? await youtubeCookies() : undefined })
+      body: JSON.stringify({ url, title, cookies: needsLogin(url) ? await loginCookies() : undefined })
     })
     if (res.status === 202) return { ok: true }
     if (res.status === 401) return { error: 'Wrong token — copy it again from the app Settings.' }

@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Job, PlaylistInfo, Settings, VideoInfo, YtFormat } from '../../shared/types'
 import { buildFormatSelector } from './formats'
-import { isYouTubeUrl } from '../../shared/links'
+import { isYouTubeUrl, usesExtensionLogin } from '../../shared/links'
 
 /** How to launch yt-dlp: the executable plus arguments that go before ours (tests use node + a stub). */
 export interface YtDlpExec {
@@ -109,7 +109,7 @@ function commonArgs(settings: Settings, url: string, extra: ExtraArgs = {}): str
   const args = ['--encoding', 'utf-8', '--no-warnings']
   if (extra.nodePath) args.push('--js-runtimes', `node:${extra.nodePath}`)
   if (settings.useChromeCookies) args.push('--cookies-from-browser', 'chrome')
-  else if (settings.useExtensionLogin && extra.cookieFile && isYouTubeUrl(url) && existsSync(extra.cookieFile)) {
+  else if (settings.useExtensionLogin && extra.cookieFile && usesExtensionLogin(url) && existsSync(extra.cookieFile)) {
     args.push('--cookies', extra.cookieFile)
   }
   return args
