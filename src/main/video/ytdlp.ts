@@ -26,6 +26,8 @@ export interface YtProgress {
 const PROGRESS_TEMPLATE =
   'download:RFTP %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s %(progress.speed)s %(progress.eta)s'
 const FILE_MARK = 'RFTFILE:'
+/** Printed before downloading: the size of every chosen format together (video + audio). */
+const SIZE_MARK = 'RFTSIZE '
 
 const num = (s: string | undefined): number | null => {
   if (s === undefined || s === 'NA' || s === 'None') return null
@@ -33,10 +35,12 @@ const num = (s: string | undefined): number | null => {
   return Number.isFinite(n) ? Math.round(n) : null
 }
 
+const ALREADY_DOWNLOADED = /^\[download\] (.+) has already been downloaded/
+
 /** The output file a yt-dlp status line refers to, if any. */
 function pathFromLine(line: string): string | null {
   const m =
-    /^\[download\] (.+) has already been downloaded/.exec(line) ??
+    ALREADY_DOWNLOADED.exec(line) ??
     /^\[Merger\] Merging formats into "(.+)"$/.exec(line) ??
     /^\[ExtractAudio\] Destination: (.+)$/.exec(line)
   return m ? m[1].trim() : null
@@ -217,6 +221,8 @@ export function buildDownloadArgs(
     '--progress-template',
     PROGRESS_TEMPLATE,
     '--print',
+    `before_dl:${SIZE_MARK}%(filesize,filesize_approx)s`,
+    '--print',
     `after_move:${FILE_MARK}%(filepath)s`,
     '--no-quiet',
     '--progress',
@@ -234,6 +240,8 @@ export class YtDlpDownload extends EventEmitter {
   /** Bytes of streams already finished (video before audio, etc.). */
   private base = 0
   private current: YtProgress | null = null
+  /** Size of the whole download from yt-dlp, else the quality dialog's estimate. */
+  private expected: number | null = null
 
   constructor(
     private readonly job: Job,
@@ -265,6 +273,7 @@ export class YtDlpDownload extends EventEmitter {
   private runOnce(settings: Settings): Promise<string | null> {
     this.base = 0
     this.current = null
+    this.expected = this.job.totalBytes
     return new Promise((resolve) => {
       const args = [...(this.exec.preArgs ?? []), ...buildDownloadArgs(this.job, settings, this.ffmpegDir, this.exec)]
       const child = spawn(this.exec.exe, args, { windowsHide: true, env: ytEnv() })
@@ -318,8 +327,19 @@ export class YtDlpDownload extends EventEmitter {
   }
 
   private onLine(line: string): void {
+    if (line.startsWith(SIZE_MARK)) {
+      this.expected = num(line.slice(SIZE_MARK.length).trim()) ?? this.expected
+      return
+    }
     if (/^\[(Merger|ExtractAudio|VideoConvertor|FixupM3u8|VideoRemuxer)\]/.test(line)) {
       this.emit('status', 'merging')
+      return
+    }
+    // a stream finished in an earlier run (e.g. the video, before a pause) still counts as received
+    const done = ALREADY_DOWNLOADED.exec(line)
+    if (done) {
+      this.base += fileSize(done[1].trim()) ?? 0
+      this.current = null
       return
     }
     if (line.startsWith('[download] Destination:') && this.current) {
@@ -331,8 +351,10 @@ export class YtDlpDownload extends EventEmitter {
     if (!p) return
     this.current = p
     const received = this.base + p.downloaded
-    const streamTotal = p.totalBytes === null ? null : this.base + p.totalBytes
-    const total = streamTotal ?? this.job.totalBytes
+    // the streams seen so far are a lower bound; the expected size also covers streams still to come
+    const seen = this.base + (p.totalBytes ?? p.downloaded)
+    const known = p.totalBytes !== null || this.expected !== null
+    const total = known ? Math.max(seen, this.expected ?? 0) : null
     this.emit('progress', { received, total, speedBps: p.speedBps ?? 0 })
   }
 }

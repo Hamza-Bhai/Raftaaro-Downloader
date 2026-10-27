@@ -189,10 +189,16 @@ describe('YtDlpDownload', () => {
     expect(statuses).toEqual(['merging'])
     expect(progress.at(-1)).toEqual(expect.objectContaining({ received: 1234, total: 1234 }))
   })
+})
 
-  it('prefers the real stream size over the dialog estimate', async () => {
+describe('YtDlpDownload total size', () => {
+  /** Run the fake download with extra env vars and return every progress event. */
+  async function progressOf(
+    env: Record<string, string>,
+    totalBytes: number | null
+  ): Promise<{ received: number; total: number | null }[]> {
     const out = join(mkdtempSync(join(tmpdir(), 'raftaaro-ytd-')), 'v.mp4')
-    process.env.FAKE_YTDLP_OUT = out
+    Object.assign(process.env, { FAKE_YTDLP_OUT: out, ...env })
     const job = {
       id: 'j',
       kind: 'video' as const,
@@ -200,7 +206,7 @@ describe('YtDlpDownload', () => {
       title: 'x',
       savePath: dirname(out),
       status: 'queued' as const,
-      totalBytes: 99999,
+      totalBytes,
       receivedBytes: 0,
       speedBps: 0,
       etaSec: null,
@@ -212,9 +218,35 @@ describe('YtDlpDownload', () => {
     try {
       await d.start()
     } finally {
-      delete process.env.FAKE_YTDLP_OUT
+      for (const k of ['FAKE_YTDLP_OUT', ...Object.keys(env)]) delete process.env[k]
     }
-    expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1000 }))
+    return progress
+  }
+
+  it('counts the audio in the total while the video is still downloading', async () => {
+    const progress = await progressOf({ FAKE_YTDLP_SIZE: '1400' }, null)
+    expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1400 }))
+    expect(progress).toContainEqual(expect.objectContaining({ received: 1200, total: 1400 }))
+  })
+
+  it("prefers yt-dlp's size of the chosen formats over the dialog estimate", async () => {
+    const progress = await progressOf({ FAKE_YTDLP_SIZE: '1400' }, 99999)
+    expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1400 }))
+  })
+
+  it('keeps the dialog estimate when yt-dlp does not know the size', async () => {
+    const progress = await progressOf({ FAKE_YTDLP_SIZE: 'NA' }, 1400)
+    expect(progress[0]).toEqual(expect.objectContaining({ received: 500, total: 1400 }))
+  })
+
+  it('never shows a total below what was already received', async () => {
+    const progress = await progressOf({ FAKE_YTDLP_SIZE: '600' }, null)
+    for (const p of progress) expect(p.total).toBeGreaterThanOrEqual(p.received)
+  })
+
+  it('counts a stream finished in an earlier run after resuming', async () => {
+    const progress = await progressOf({ FAKE_YTDLP_RESUME: '1' }, null)
+    expect(progress[0]).toEqual(expect.objectContaining({ received: 1200, total: 1400 }))
   })
 })
 
@@ -353,6 +385,8 @@ describe('buildDownloadArgs', () => {
     // --print implies --quiet, which would hide progress and [Merger] lines
     expect(args.indexOf('--no-quiet')).toBeGreaterThan(args.indexOf('--print'))
     expect(args).toContain('--progress')
+    // the size of video + audio together, known before the first stream starts
+    expect(args).toContain('before_dl:RFTSIZE %(filesize,filesize_approx)s')
     expect(args.at(-1)).toBe('https://youtu.be/x')
     expect(args.join(' ')).toContain('bv*[height<=1080]+ba')
   })

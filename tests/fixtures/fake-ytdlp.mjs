@@ -24,10 +24,22 @@ if (args.includes('--progress-template')) {
     process.stdout.write(`[download] ${out} has already been downloaded\n`)
     process.exit(0)
   }
-  const lines = [
+  // FAKE_YTDLP_SIZE: the before_dl print of the chosen formats' total size ("NA" when unknown)
+  const size = process.env.FAKE_YTDLP_SIZE ? [`RFTSIZE ${process.env.FAKE_YTDLP_SIZE}`] : []
+  // FAKE_YTDLP_RESUME: the video stream finished in an earlier run, so only the audio is fetched now
+  let video = [
     '[download] Destination: v.f1.mp4',
     'RFTP 500 1000 NA 100 5',
-    'RFTP 1000 1000 NA 100 0',
+    'RFTP 1000 1000 NA 100 0'
+  ]
+  if (process.env.FAKE_YTDLP_RESUME) {
+    const part = join(dirname(out), 'v.f1.mp4')
+    writeFileSync(part, Buffer.alloc(1000))
+    video = [`[download] ${part} has already been downloaded`]
+  }
+  const lines = [
+    ...size,
+    ...video,
     '[download] Destination: v.f2.m4a',
     'RFTP 200 400 NA 100 2',
     '[Merger] Merging formats into "v.mp4"'
