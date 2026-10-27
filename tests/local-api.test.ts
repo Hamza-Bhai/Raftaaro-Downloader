@@ -7,7 +7,11 @@ let calls: { url: string; title?: string; cookies?: unknown[] }[] = []
 
 async function start(): Promise<string> {
   calls = []
-  api = await startLocalApi({ port: 0, token: TOKEN, onLink: (url, title, cookies) => calls.push(cookies ? { url, title, cookies } : { url, title }) })
+  api = await startLocalApi({
+    port: 0,
+    token: TOKEN,
+    onLink: (url, title, cookies) => calls.push(cookies ? { url, title, cookies } : { url, title })
+  })
   return `http://127.0.0.1:${api.port}`
 }
 
@@ -46,7 +50,11 @@ describe('local API', () => {
 
   it('passes along the YouTube login the extension sends', async () => {
     const base = await start()
-    const cookies = Array.from({ length: 80 }, (_, i) => ({ name: `c${i}`, value: 'v'.repeat(500), domain: '.youtube.com' }))
+    const cookies = Array.from({ length: 80 }, (_, i) => ({
+      name: `c${i}`,
+      value: 'v'.repeat(500),
+      domain: '.youtube.com'
+    }))
     const r = await post(base, { url: 'https://youtu.be/x', title: 'X', cookies })
     expect(r.status).toBe(202)
     expect(calls[0].cookies).toHaveLength(80)

@@ -27,9 +27,7 @@ const handlers: CardHandlers = {
     const job = jobs.get(id)
     if (!job) return
     const deleteFile =
-      job.status === 'done'
-        ? confirm(`Removing "${job.title}" from the list.\n\nDelete the file from disk too?`)
-        : true
+      job.status === 'done' ? confirm(`Removing "${job.title}" from the list.\n\nDelete the file from disk too?`) : true
     void window.raftaaro.remove(id, deleteFile)
   }
 }
@@ -89,7 +87,9 @@ function refreshEmpty(): void {
 
 function setView(v: View): void {
   view = v
-  document.querySelectorAll<HTMLButtonElement>('.nav').forEach((b) => b.classList.toggle('active', b.dataset.view === v))
+  document
+    .querySelectorAll<HTMLButtonElement>('.nav')
+    .forEach((b) => b.classList.toggle('active', b.dataset.view === v))
   list.hidden = v === 'settings'
   settingsEl.hidden = v !== 'settings'
   for (const [id, el] of cards) el.hidden = !visible(jobs.get(id)!)
@@ -131,9 +131,9 @@ form.addEventListener('submit', async (e) => {
   await startDownload(url)
 })
 
-document.querySelectorAll<HTMLButtonElement>('.nav').forEach((b) =>
-  b.addEventListener('click', () => setView(b.dataset.view as View))
-)
+document
+  .querySelectorAll<HTMLButtonElement>('.nav')
+  .forEach((b) => b.addEventListener('click', () => setView(b.dataset.view as View)))
 
 document.addEventListener('app:view', (e) => {
   if ((e as CustomEvent<View>).detail === 'settings') void renderSettings(settingsEl)

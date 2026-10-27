@@ -14,7 +14,10 @@ const base: BrowserCookie = {
 
 describe('toNetscapeCookies', () => {
   it('writes the Netscape cookie file format yt-dlp reads', () => {
-    const text = toNetscapeCookies([base, { ...base, domain: 'www.youtube.com', hostOnly: true, secure: false, session: true, name: 'PREF', value: 'f6=8' }])
+    const text = toNetscapeCookies([
+      base,
+      { ...base, domain: 'www.youtube.com', hostOnly: true, secure: false, session: true, name: 'PREF', value: 'f6=8' }
+    ])
     expect(text).toBe(
       '# Netscape HTTP Cookie File\n' +
         '.youtube.com\tTRUE\t/\tTRUE\t1893456000\tSID\tabc\n' +
@@ -38,7 +41,10 @@ describe('toNetscapeCookies', () => {
   })
 
   it('drops cookies that would break the file', () => {
-    const text = toNetscapeCookies([{ ...base, value: 'a\nb' }, { ...base, name: 'x\ty' }])
+    const text = toNetscapeCookies([
+      { ...base, value: 'a\nb' },
+      { ...base, name: 'x\ty' }
+    ])
     expect(text).toBe('# Netscape HTTP Cookie File\n')
   })
 })

@@ -1,5 +1,14 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import type { AddPlaylistInput, AddVideoInput, Job, MediaType, PlaylistInfo, QualityOption, Settings, VideoInfo } from '../shared/types'
+import type {
+  AddPlaylistInput,
+  AddVideoInput,
+  Job,
+  MediaType,
+  PlaylistInfo,
+  QualityOption,
+  Settings,
+  VideoInfo
+} from '../shared/types'
 
 function subscribe<T>(channel: string, cb: (payload: T) => void): () => void {
   const listener = (_e: IpcRendererEvent, payload: T): void => cb(payload)

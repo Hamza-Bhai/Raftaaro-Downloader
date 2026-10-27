@@ -38,9 +38,9 @@ export class DownloadQueue extends EventEmitter {
     private readonly makeRunner: (job: Job) => Runner
   ) {
     super()
-    this.jobs = store.getJobs().map((j) =>
-      ACTIVE.includes(j.status) ? { ...j, status: 'paused' as const, speedBps: 0, etaSec: null } : j
-    )
+    this.jobs = store
+      .getJobs()
+      .map((j) => (ACTIVE.includes(j.status) ? { ...j, status: 'paused' as const, speedBps: 0, etaSec: null } : j))
     this.persist()
     this.pump()
   }

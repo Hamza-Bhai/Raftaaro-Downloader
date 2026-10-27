@@ -1,7 +1,15 @@
 import { BrowserWindow, clipboard, dialog, ipcMain, shell, type OpenDialogOptions } from 'electron'
 import { dirname } from 'node:path'
 import { existsSync, statSync } from 'node:fs'
-import type { AddPlaylistInput, AddVideoInput, Job, MediaType, PlaylistInfo, Settings, VideoInfo } from '../shared/types'
+import type {
+  AddPlaylistInput,
+  AddVideoInput,
+  Job,
+  MediaType,
+  PlaylistInfo,
+  Settings,
+  VideoInfo
+} from '../shared/types'
 import { extractFirstUrl } from '../shared/links'
 import { playlistFolder } from './util/filename'
 import { probe, type YtDlpExec } from './video/ytdlp'
@@ -18,7 +26,8 @@ export interface IpcDeps {
   ytExec: YtDlpExec
 }
 
-const clamp = (n: number, min: number, max: number): number => Math.min(max, Math.max(min, Math.round(Number(n) || min)))
+const clamp = (n: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, Math.round(Number(n) || min)))
 
 function titleFromUrl(url: string): string {
   try {

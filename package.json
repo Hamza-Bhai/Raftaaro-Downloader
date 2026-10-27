@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Raftaaro — a free, open source download manager with multi-connection downloads and YouTube/video support",
   "main": "./out/main/index.js",
-  "author": "Hamza",
+  "author": "Hamza Pervaiz",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -34,6 +34,7 @@
     "electron-builder": "^26.15.3",
     "electron-vite": "^6.0.0",
     "eslint": "^10.12.0",
+    "globals": "^17.13.0",
     "prettier": "^3.9.10",
     "typescript": "^5.9.3",
     "vite": "^8.3.4",

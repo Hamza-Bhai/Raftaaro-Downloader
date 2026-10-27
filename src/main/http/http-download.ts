@@ -85,7 +85,7 @@ function fileNameFrom(res: IncomingMessage, url: string): string {
   const cd = res.headers['content-disposition'] ?? ''
   const star = /filename\*=(?:UTF-8'')?([^;]+)/i.exec(cd)
   const plain = /filename="?([^";]+)"?/i.exec(cd)
-  let name = ''
+  let name: string
   if (star) name = decodeURIComponent(star[1].trim().replace(/^"|"$/g, ''))
   else if (plain) name = plain[1].trim()
   else {
@@ -187,7 +187,7 @@ export class HttpDownload extends EventEmitter {
     if (meta && meta.url === this.opts.url && !existsSync(preferred) && free(preferred)) return preferred
     mkdirSync(this.opts.dir, { recursive: true })
     // a name is free only if neither the file nor another download's part folder uses it
-    for (let probe = fileName; ; ) {
+    for (let probe = fileName; ;) {
       const candidate = uniquePath(this.opts.dir, probe)
       if (!existsSync(`${candidate}.rpart`) && free(candidate)) return candidate
       probe = `_${probe}`

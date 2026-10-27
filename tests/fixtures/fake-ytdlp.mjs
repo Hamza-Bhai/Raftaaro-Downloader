@@ -27,11 +27,7 @@ if (args.includes('--progress-template')) {
   // FAKE_YTDLP_SIZE: the before_dl print of the chosen formats' total size ("NA" when unknown)
   const size = process.env.FAKE_YTDLP_SIZE ? [`RFTSIZE ${process.env.FAKE_YTDLP_SIZE}`] : []
   // FAKE_YTDLP_RESUME: the video stream finished in an earlier run, so only the audio is fetched now
-  let video = [
-    '[download] Destination: v.f1.mp4',
-    'RFTP 500 1000 NA 100 5',
-    'RFTP 1000 1000 NA 100 0'
-  ]
+  let video = ['[download] Destination: v.f1.mp4', 'RFTP 500 1000 NA 100 5', 'RFTP 1000 1000 NA 100 0']
   // FAKE_YTDLP_HLS: a streamed format, where yt-dlp only guesses the total and the guess jumps around
   if (process.env.FAKE_YTDLP_HLS) {
     video = ['[download] Destination: v.f1.mp4', 'RFTP 500 NA 5000 100 5', 'RFTP 1000 NA 900 100 0']
@@ -59,7 +55,11 @@ if (url.includes('fail')) {
   process.stderr.write("ERROR: [youtube] xyz: Private video. Sign in if you've been granted access to this video\n")
   process.exit(1)
 }
-const name = url.endsWith('/@chan') ? 'raw-channel.json' : url.includes('list=') ? 'raw-playlist.json' : 'raw-video.json'
+const name = url.endsWith('/@chan')
+  ? 'raw-channel.json'
+  : url.includes('list=')
+    ? 'raw-playlist.json'
+    : 'raw-video.json'
 let text = readFileSync(join(here, name), 'utf8')
 if (url.endsWith('/videos')) text = readFileSync(join(here, 'raw-playlist.json'), 'utf8')
 process.stdout.write(text)

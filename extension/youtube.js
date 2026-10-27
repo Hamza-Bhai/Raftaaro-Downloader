@@ -3,7 +3,8 @@ const BTN_ID = 'raftaaro-download-btn'
 
 function videoUrl() {
   const u = new URL(location.href)
-  if (u.pathname === '/watch' && u.searchParams.get('v')) return `https://www.youtube.com/watch?v=${u.searchParams.get('v')}`
+  if (u.pathname === '/watch' && u.searchParams.get('v'))
+    return `https://www.youtube.com/watch?v=${u.searchParams.get('v')}`
   if (u.pathname.startsWith('/shorts/')) return u.origin + u.pathname
   return null
 }

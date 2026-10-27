@@ -6,7 +6,25 @@
   "uploader": null,
   "thumbnail": null,
   "formats": [
-    { "format_id": "sd", "ext": "mp4", "height": 360, "vcodec": "h264", "acodec": "aac", "filesize": null, "filesize_approx": null, "tbr": null },
-    { "format_id": "hd", "ext": "mp4", "height": 720, "vcodec": "h264", "acodec": "aac", "filesize": 12000000, "filesize_approx": null, "tbr": null }
+    {
+      "format_id": "sd",
+      "ext": "mp4",
+      "height": 360,
+      "vcodec": "h264",
+      "acodec": "aac",
+      "filesize": null,
+      "filesize_approx": null,
+      "tbr": null
+    },
+    {
+      "format_id": "hd",
+      "ext": "mp4",
+      "height": 720,
+      "vcodec": "h264",
+      "acodec": "aac",
+      "filesize": 12000000,
+      "filesize_approx": null,
+      "tbr": null
+    }
   ]
 }

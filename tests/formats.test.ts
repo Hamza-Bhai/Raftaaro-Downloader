@@ -38,8 +38,26 @@ describe('buildQualityOptions', () => {
   it('estimates from bitrate and duration when sizes are missing', () => {
     const info = fixture('yt-4k.json')
     info.formats = [
-      { format_id: 'v', ext: 'mp4', height: 720, vcodec: 'avc1', acodec: 'none', filesize: null, filesize_approx: null, tbr: 1000 },
-      { format_id: 'a', ext: 'm4a', height: null, vcodec: 'none', acodec: 'mp4a', filesize: null, filesize_approx: null, tbr: 128 }
+      {
+        format_id: 'v',
+        ext: 'mp4',
+        height: 720,
+        vcodec: 'avc1',
+        acodec: 'none',
+        filesize: null,
+        filesize_approx: null,
+        tbr: 1000
+      },
+      {
+        format_id: 'a',
+        ext: 'm4a',
+        height: null,
+        vcodec: 'none',
+        acodec: 'mp4a',
+        filesize: null,
+        filesize_approx: null,
+        tbr: 128
+      }
     ]
     // (1000 + 128) kbit/s * 624 s / 8 = 87,984,000 bytes
     expect(buildQualityOptions(info, 'video').find((o) => o.value === 720)!.estBytes).toBe(87984000)
@@ -54,7 +72,16 @@ describe('buildQualityOptions', () => {
 
   it('prefers a stream with a known size over a sizeless (HLS) one of the same codec', () => {
     const info = fixture('yt-4k.json')
-    info.formats.push({ format_id: '96', ext: 'mp4', height: 1080, vcodec: 'avc1.640028', acodec: 'none', filesize: null, filesize_approx: null, tbr: 9000 })
+    info.formats.push({
+      format_id: '96',
+      ext: 'mp4',
+      height: 1080,
+      vcodec: 'avc1.640028',
+      acodec: 'none',
+      filesize: null,
+      filesize_approx: null,
+      tbr: 9000
+    })
     expect(buildQualityOptions(info, 'video').find((o) => o.value === 1080)!.estBytes).toBe(110000000)
   })
 

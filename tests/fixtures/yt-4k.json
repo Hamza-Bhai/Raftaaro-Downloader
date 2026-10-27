@@ -6,12 +6,75 @@
   "uploader": "CatChannel",
   "thumbnail": "https://i.ytimg.com/vi/abc/hq.jpg",
   "formats": [
-    { "format_id": "18", "ext": "mp4", "height": 360, "vcodec": "avc1.42001E", "acodec": "mp4a.40.2", "filesize": 25000000, "filesize_approx": null, "tbr": 500 },
-    { "format_id": "137", "ext": "mp4", "height": 1080, "vcodec": "avc1.640028", "acodec": "none", "filesize": 100000000, "filesize_approx": null, "tbr": 4000 },
-    { "format_id": "248", "ext": "webm", "height": 1080, "vcodec": "vp9", "acodec": "none", "filesize": null, "filesize_approx": 90000000, "tbr": 3500 },
-    { "format_id": "313", "ext": "webm", "height": 2160, "vcodec": "vp9", "acodec": "none", "filesize": 580000000, "filesize_approx": null, "tbr": 18000 },
-    { "format_id": "140", "ext": "m4a", "height": null, "vcodec": "none", "acodec": "mp4a.40.2", "filesize": 10000000, "filesize_approx": null, "tbr": 129 },
-    { "format_id": "251", "ext": "webm", "height": null, "vcodec": "none", "acodec": "opus", "filesize": 9000000, "filesize_approx": null, "tbr": 140 },
-    { "format_id": "sb0", "ext": "mhtml", "height": 90, "vcodec": "none", "acodec": "none", "filesize": null, "filesize_approx": null, "tbr": null }
+    {
+      "format_id": "18",
+      "ext": "mp4",
+      "height": 360,
+      "vcodec": "avc1.42001E",
+      "acodec": "mp4a.40.2",
+      "filesize": 25000000,
+      "filesize_approx": null,
+      "tbr": 500
+    },
+    {
+      "format_id": "137",
+      "ext": "mp4",
+      "height": 1080,
+      "vcodec": "avc1.640028",
+      "acodec": "none",
+      "filesize": 100000000,
+      "filesize_approx": null,
+      "tbr": 4000
+    },
+    {
+      "format_id": "248",
+      "ext": "webm",
+      "height": 1080,
+      "vcodec": "vp9",
+      "acodec": "none",
+      "filesize": null,
+      "filesize_approx": 90000000,
+      "tbr": 3500
+    },
+    {
+      "format_id": "313",
+      "ext": "webm",
+      "height": 2160,
+      "vcodec": "vp9",
+      "acodec": "none",
+      "filesize": 580000000,
+      "filesize_approx": null,
+      "tbr": 18000
+    },
+    {
+      "format_id": "140",
+      "ext": "m4a",
+      "height": null,
+      "vcodec": "none",
+      "acodec": "mp4a.40.2",
+      "filesize": 10000000,
+      "filesize_approx": null,
+      "tbr": 129
+    },
+    {
+      "format_id": "251",
+      "ext": "webm",
+      "height": null,
+      "vcodec": "none",
+      "acodec": "opus",
+      "filesize": 9000000,
+      "filesize_approx": null,
+      "tbr": 140
+    },
+    {
+      "format_id": "sb0",
+      "ext": "mhtml",
+      "height": 90,
+      "vcodec": "none",
+      "acodec": "none",
+      "filesize": null,
+      "filesize_approx": null,
+      "tbr": null
+    }
   ]
 }

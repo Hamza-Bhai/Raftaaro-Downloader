@@ -1,1 +1,10 @@
-{"_type":"playlist","id":"UC1","title":"Chan","webpage_url":"https://www.youtube.com/@chan","entries":[{"_type":"url","ie_key":"YoutubeTab","url":"https://www.youtube.com/@chan/shorts","title":"Chan - Shorts"},{"_type":"url","ie_key":"YoutubeTab","url":"https://www.youtube.com/@chan/videos","title":"Chan - Videos"}]}
+{
+  "_type": "playlist",
+  "id": "UC1",
+  "title": "Chan",
+  "webpage_url": "https://www.youtube.com/@chan",
+  "entries": [
+    { "_type": "url", "ie_key": "YoutubeTab", "url": "https://www.youtube.com/@chan/shorts", "title": "Chan - Shorts" },
+    { "_type": "url", "ie_key": "YoutubeTab", "url": "https://www.youtube.com/@chan/videos", "title": "Chan - Videos" }
+  ]
+}

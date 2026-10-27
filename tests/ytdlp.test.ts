@@ -2,7 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { classifyYtDlpError, parseProgress, probe, buildDownloadArgs, YtDlpDownload, RATE_LIMIT_MESSAGE } from '../src/main/video/ytdlp'
+import {
+  classifyYtDlpError,
+  parseProgress,
+  probe,
+  buildDownloadArgs,
+  YtDlpDownload,
+  RATE_LIMIT_MESSAGE
+} from '../src/main/video/ytdlp'
 import type { Settings } from '../src/shared/types'
 
 const settings: Settings = {
@@ -44,7 +51,9 @@ describe('classifyYtDlpError', () => {
     const login = 'Sign-in required — sign in to the site in Chrome, then send the link with the Raftaaro extension'
     expect(classifyYtDlpError('ERROR: [youtube] a: Private video. Sign in if you have been granted access')).toBe(login)
     expect(
-      classifyYtDlpError('ERROR: [Instagram] a: Requested content is not available, rate-limit reached or login required')
+      classifyYtDlpError(
+        'ERROR: [Instagram] a: Requested content is not available, rate-limit reached or login required'
+      )
     ).toBe(login)
   })
   it('suggests updating on extraction and 403 errors', () => {
@@ -53,9 +62,9 @@ describe('classifyYtDlpError', () => {
     expect(classifyYtDlpError('ERROR: [youtube] a: Unable to extract initial player response')).toBe(upd)
   })
   it('recognises YouTube rate limiting', () => {
-    expect(classifyYtDlpError("ERROR: [youtube] a: Sign in to confirm you're not a bot. Use --cookies-from-browser")).toBe(
-      RATE_LIMIT_MESSAGE
-    )
+    expect(
+      classifyYtDlpError("ERROR: [youtube] a: Sign in to confirm you're not a bot. Use --cookies-from-browser")
+    ).toBe(RATE_LIMIT_MESSAGE)
     expect(classifyYtDlpError('ERROR: unable to download webpage: HTTP Error 429: Too Many Requests')).toBe(
       RATE_LIMIT_MESSAGE
     )
@@ -68,7 +77,9 @@ describe('classifyYtDlpError', () => {
     expect(msg).toBe(
       'Could not read your Chrome login (Chrome keeps it locked). Turn off "Use my Chrome login" in Settings, or fully close Chrome and retry.'
     )
-    expect(classifyYtDlpError('ERROR: Failed to decrypt with DPAPI. See  https://github.com/yt-dlp/yt-dlp/issues/10927')).toBe(msg)
+    expect(
+      classifyYtDlpError('ERROR: Failed to decrypt with DPAPI. See  https://github.com/yt-dlp/yt-dlp/issues/10927')
+    ).toBe(msg)
   })
 
   it('reports unavailable videos', () => {
@@ -92,7 +103,12 @@ describe('probe', () => {
     })
     if (info.kind !== 'video') throw new Error('expected video')
     expect(info.formats).toHaveLength(3)
-    expect(info.formats[2]).toMatchObject({ format_id: '137', height: 1080, filesize: null, filesize_approx: 100000000 })
+    expect(info.formats[2]).toMatchObject({
+      format_id: '137',
+      height: 1080,
+      filesize: null,
+      filesize_approx: 100000000
+    })
   })
 
   it('returns PlaylistInfo with entry urls', async () => {
@@ -120,7 +136,10 @@ describe('probe', () => {
     try {
       await probe('https://www.youtube.com/watch?v=abc', settings, fake)
       await probe('https://www.youtube.com/watch?v=abc', { ...settings, useChromeCookies: true }, fake)
-      const calls = readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l) as string[])
+      const calls = readFileSync(log, 'utf8')
+        .trim()
+        .split('\n')
+        .map((l) => JSON.parse(l) as string[])
       expect(calls[0]).not.toContain('--cookies-from-browser')
       expect(calls[1].join(' ')).toContain('--cookies-from-browser chrome')
       expect(calls[0]).toContain('--no-playlist')
@@ -361,7 +380,9 @@ describe('YouTube login from the extension', () => {
     }
   })
   it('does not use it when the setting is off, for other sites, or when no login was saved', () => {
-    expect(cookieArg(buildDownloadArgs(job, { ...on, useExtensionLogin: false }, 'C:\\bin', { cookieFile }))).toBeUndefined()
+    expect(
+      cookieArg(buildDownloadArgs(job, { ...on, useExtensionLogin: false }, 'C:\\bin', { cookieFile }))
+    ).toBeUndefined()
     expect(
       cookieArg(buildDownloadArgs({ ...job, url: 'https://vimeo.com/1' }, on, 'C:\\bin', { cookieFile }))
     ).toBeUndefined()
@@ -393,7 +414,11 @@ describe('buildDownloadArgs', () => {
   })
 
   it('keeps best-quality and audio names plain', () => {
-    const best = buildDownloadArgs({ url: 'u', savePath: 'C:\\v', choice: { media: 'video', height: 'best' } }, settings, 'C:\\bin')
+    const best = buildDownloadArgs(
+      { url: 'u', savePath: 'C:\\v', choice: { media: 'video', height: 'best' } },
+      settings,
+      'C:\\bin'
+    )
     expect(best[best.indexOf('-o') + 1]).toBe('C:\\v\\%(title).170B [%(id)s].%(ext)s')
     const mp3 = buildDownloadArgs(
       { url: 'u', savePath: 'C:\\a', choice: { media: 'audio', height: 'best', audioFormat: 'mp3' } },

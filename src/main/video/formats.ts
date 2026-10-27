@@ -55,9 +55,9 @@ export function buildQualityOptions(info: VideoInfo, media: MediaType): QualityO
       { value: 'best', label: 'M4A', audioFormat: 'm4a', estBytes }
     ]
   }
-  const heights = [
-    ...new Set(info.formats.filter((f) => hasVideo(f) && f.height).map((f) => f.height as number))
-  ].sort((a, b) => b - a)
+  const heights = [...new Set(info.formats.filter((f) => hasVideo(f) && f.height).map((f) => f.height as number))].sort(
+    (a, b) => b - a
+  )
   const options: QualityOption[] = heights.map((h) => ({
     value: h,
     label: heightLabel(h),

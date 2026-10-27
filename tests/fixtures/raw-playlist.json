@@ -1,1 +1,17 @@
-{"_type":"playlist","id":"PL1","title":"My playlist","webpage_url":"https://www.youtube.com/playlist?list=PL1","entries":[{"_type":"url","ie_key":"Youtube","id":"v1","url":"https://www.youtube.com/watch?v=v1","title":"First","duration":61},{"_type":"url","ie_key":"Youtube","id":"v2","title":"Second","duration":null}]}
+{
+  "_type": "playlist",
+  "id": "PL1",
+  "title": "My playlist",
+  "webpage_url": "https://www.youtube.com/playlist?list=PL1",
+  "entries": [
+    {
+      "_type": "url",
+      "ie_key": "Youtube",
+      "id": "v1",
+      "url": "https://www.youtube.com/watch?v=v1",
+      "title": "First",
+      "duration": 61
+    },
+    { "_type": "url", "ie_key": "Youtube", "id": "v2", "title": "Second", "duration": null }
+  ]
+}

@@ -140,9 +140,7 @@ describe('HttpDownload', () => {
     const second = new HttpDownload({ url: `${base}/file.bin`, dir, parts: 4 })
     const path = await run(second)
     expect(sha(readFileSync(path))).toBe(sha(data))
-    const starts = srv.rangeRequests
-      .filter((r) => r !== 'bytes=0-0')
-      .map((r) => Number(/bytes=(\d+)/.exec(r)![1]))
+    const starts = srv.rangeRequests.filter((r) => r !== 'bytes=0-0').map((r) => Number(/bytes=(\d+)/.exec(r)![1]))
     const partStarts = [0, 1, 2, 3].map((i) => i * Math.floor(SIZE / 4))
     // at least one part resumed past its own start, so not everything was re-downloaded
     expect(starts.some((s) => !partStarts.includes(s))).toBe(true)
@@ -190,9 +188,7 @@ describe('HttpDownload', () => {
   it('emits error on 404 without creating the final file', async () => {
     reset()
     const dir = tmp()
-    await expect(run(new HttpDownload({ url: `${base}/missing`, dir, parts: 4 }))).rejects.toThrow(
-      /404/
-    )
+    await expect(run(new HttpDownload({ url: `${base}/missing`, dir, parts: 4 }))).rejects.toThrow(/404/)
     expect(existsSync(join(dir, 'missing'))).toBe(false)
   })
 })

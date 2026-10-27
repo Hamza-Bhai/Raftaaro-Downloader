@@ -47,7 +47,10 @@ async function fetchYtDlp() {
   if (existsSync(target) && !force) return console.log('yt-dlp.exe already present')
   console.log('Downloading yt-dlp.exe…')
   const [exe, sums] = await Promise.all([download(YTDLP), download(YTDLP_SUMS)])
-  const line = sums.toString('utf8').split('\n').find((l) => l.trim().endsWith(' yt-dlp.exe'))
+  const line = sums
+    .toString('utf8')
+    .split('\n')
+    .find((l) => l.trim().endsWith(' yt-dlp.exe'))
   if (!line) throw new Error('yt-dlp.exe not listed in SHA2-256SUMS')
   verify(exe, line.trim().split(/\s+/)[0], 'yt-dlp.exe')
   writeFileSync(target, exe)
@@ -58,7 +61,10 @@ async function fetchFfmpeg() {
   if (targets.every(existsSync) && !force) return console.log('ffmpeg.exe / ffprobe.exe already present')
   console.log('Downloading FFmpeg (BtbN LGPL build)…')
   const [zip, sums] = await Promise.all([download(FFMPEG_ZIP), download(FFMPEG_SUMS)])
-  const line = sums.toString('utf8').split('\n').find((l) => l.trim().endsWith(FFMPEG_NAME))
+  const line = sums
+    .toString('utf8')
+    .split('\n')
+    .find((l) => l.trim().endsWith(FFMPEG_NAME))
   if (!line) throw new Error(`${FFMPEG_NAME} not listed in checksums.sha256`)
   verify(zip, line.trim().split(/\s+/)[0], 'ffmpeg zip')
   const work = mkdtempSync(join(tmpdir(), 'raftaaro-ffmpeg-'))

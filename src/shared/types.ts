@@ -1,12 +1,5 @@
 export type JobKind = 'file' | 'video'
-export type JobStatus =
-  | 'queued'
-  | 'probing'
-  | 'downloading'
-  | 'merging'
-  | 'paused'
-  | 'done'
-  | 'error'
+export type JobStatus = 'queued' | 'probing' | 'downloading' | 'merging' | 'paused' | 'done' | 'error'
 export type MediaType = 'video' | 'audio'
 export type AudioFormat = 'mp3' | 'm4a'
 

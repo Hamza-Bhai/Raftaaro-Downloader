@@ -1,13 +1,18 @@
 import { existsSync } from 'node:fs'
 import { extname, join } from 'node:path'
 
+// control characters are not allowed in Windows file names either
+// eslint-disable-next-line no-control-regex
 const ILLEGAL = /[<>:"/\\|?*\x00-\x1f]/g
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i
 const MAX_LEN = 200
 
 /** Make a string safe to use as a Windows file name. */
 export function sanitizeFileName(name: string): string {
-  let out = name.replace(ILLEGAL, '_').trim().replace(/[. ]+$/, '')
+  let out = name
+    .replace(ILLEGAL, '_')
+    .trim()
+    .replace(/[. ]+$/, '')
   if (RESERVED.test(out)) out = `_${out}`
   if (out.length > MAX_LEN) {
     const ext = extname(out).slice(0, 16)

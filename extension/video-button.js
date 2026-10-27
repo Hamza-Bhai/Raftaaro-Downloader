@@ -32,7 +32,10 @@ function facebookUrl(url) {
   if (/\/posts\/[\w-]+/.test(path)) return { url: `https://www.facebook.com${path}`, rank: 1 }
   const story = url.searchParams.get('story_fbid')
   if (/^\/(permalink|story)\.php$/.test(path) && story) {
-    return { url: `https://www.facebook.com${path}?story_fbid=${story}&id=${url.searchParams.get('id') ?? ''}`, rank: 1 }
+    return {
+      url: `https://www.facebook.com${path}?story_fbid=${story}&id=${url.searchParams.get('id') ?? ''}`,
+      rank: 1
+    }
   }
   return null
 }

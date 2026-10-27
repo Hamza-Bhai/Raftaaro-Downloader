@@ -1,1 +1,30 @@
-{"_type":"video","id":"abc","title":"Test video — ✓ unicode","duration":624.0,"uploader":"CatChannel","thumbnail":"https://i.ytimg.com/vi/abc/hq.jpg","webpage_url":"https://www.youtube.com/watch?v=abc","formats":[{"format_id":"18","ext":"mp4","height":360,"vcodec":"avc1.42001E","acodec":"mp4a.40.2","filesize":25000000,"tbr":500},{"format_id":"140","ext":"m4a","vcodec":"none","acodec":"mp4a.40.2","filesize":10000000,"tbr":129},{"format_id":"137","ext":"mp4","height":1080,"vcodec":"avc1.640028","acodec":"none","filesize_approx":100000000,"tbr":4000}]}
+{
+  "_type": "video",
+  "id": "abc",
+  "title": "Test video — ✓ unicode",
+  "duration": 624.0,
+  "uploader": "CatChannel",
+  "thumbnail": "https://i.ytimg.com/vi/abc/hq.jpg",
+  "webpage_url": "https://www.youtube.com/watch?v=abc",
+  "formats": [
+    {
+      "format_id": "18",
+      "ext": "mp4",
+      "height": 360,
+      "vcodec": "avc1.42001E",
+      "acodec": "mp4a.40.2",
+      "filesize": 25000000,
+      "tbr": 500
+    },
+    { "format_id": "140", "ext": "m4a", "vcodec": "none", "acodec": "mp4a.40.2", "filesize": 10000000, "tbr": 129 },
+    {
+      "format_id": "137",
+      "ext": "mp4",
+      "height": 1080,
+      "vcodec": "avc1.640028",
+      "acodec": "none",
+      "filesize_approx": 100000000,
+      "tbr": 4000
+    }
+  ]
+}

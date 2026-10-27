@@ -6,7 +6,10 @@
   height: 36px;
   padding: 0 16px;
   margin-right: 8px;
-  font: 500 14px Roboto, Arial, sans-serif;
+  font:
+    500 14px Roboto,
+    Arial,
+    sans-serif;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -28,7 +31,10 @@
   padding: 10px 18px;
   border-radius: 8px;
   color: #fff;
-  font: 14px Roboto, Arial, sans-serif;
+  font:
+    14px Roboto,
+    Arial,
+    sans-serif;
 }
 
 .raftaaro-toast.ok {

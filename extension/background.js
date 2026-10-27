@@ -26,7 +26,14 @@ async function loginCookies() {
   try {
     const lists = await Promise.all(LOGIN_SITES.map((domain) => chrome.cookies.getAll({ domain })))
     return lists.flat().map(({ domain, hostOnly, path, secure, session, expirationDate, name, value }) => ({
-      domain, hostOnly, path, secure, session, expirationDate, name, value
+      domain,
+      hostOnly,
+      path,
+      secure,
+      session,
+      expirationDate,
+      name,
+      value
     }))
   } catch {
     return undefined
@@ -71,7 +78,11 @@ function flashBadge(ok) {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({ id: 'raftaaro-link', title: 'Download with Raftaaro', contexts: ['link'] })
   chrome.contextMenus.create({ id: 'raftaaro-media', title: 'Download with Raftaaro', contexts: ['video', 'audio'] })
-  chrome.contextMenus.create({ id: 'raftaaro-page', title: 'Download this page video with Raftaaro', contexts: ['page'] })
+  chrome.contextMenus.create({
+    id: 'raftaaro-page',
+    title: 'Download this page video with Raftaaro',
+    contexts: ['page']
+  })
 })
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {

@@ -29,7 +29,9 @@ export function toNetscapeCookies(cookies: BrowserCookie[]): string {
     if (!allowed(c.domain) || ![c.domain, c.path, c.name, c.value].every(clean)) continue
     const expires = c.session || !c.expirationDate ? 0 : Math.floor(c.expirationDate)
     lines.push(
-      [c.domain, c.hostOnly ? 'FALSE' : 'TRUE', c.path, c.secure ? 'TRUE' : 'FALSE', expires, c.name, c.value].join('\t')
+      [c.domain, c.hostOnly ? 'FALSE' : 'TRUE', c.path, c.secure ? 'TRUE' : 'FALSE', expires, c.name, c.value].join(
+        '\t'
+      )
     )
   }
   return lines.join('\n') + '\n'

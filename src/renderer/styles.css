@@ -43,7 +43,10 @@ body {
   display: flex;
   background: var(--bg);
   color: var(--text);
-  font: 13px 'Segoe UI', system-ui, sans-serif;
+  font:
+    13px 'Segoe UI',
+    system-ui,
+    sans-serif;
   overflow: hidden;
 }
 

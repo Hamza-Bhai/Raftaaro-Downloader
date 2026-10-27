@@ -3,11 +3,7 @@
   "name": "Raftaaro",
   "version": "1.2.0",
   "description": "Send videos and files from YouTube, Instagram, Facebook and other sites to the Raftaaro download manager in one click.",
-  "permissions": [
-    "contextMenus",
-    "storage",
-    "cookies"
-  ],
+  "permissions": ["contextMenus", "storage", "cookies"],
   "host_permissions": [
     "http://127.0.0.1:47821/*",
     "*://*.youtube.com/*",
@@ -19,30 +15,15 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.youtube.com/*"
-      ],
-      "js": [
-        "youtube.js"
-      ],
-      "css": [
-        "youtube.css"
-      ],
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["youtube.js"],
+      "css": ["youtube.css"],
       "run_at": "document_idle"
     },
     {
-      "matches": [
-        "https://www.instagram.com/*",
-        "https://www.facebook.com/*",
-        "https://web.facebook.com/*"
-      ],
-      "js": [
-        "video-button.js"
-      ],
-      "css": [
-        "youtube.css",
-        "video-button.css"
-      ],
+      "matches": ["https://www.instagram.com/*", "https://www.facebook.com/*", "https://web.facebook.com/*"],
+      "js": ["video-button.js"],
+      "css": ["youtube.css", "video-button.css"],
       "run_at": "document_idle"
     }
   ],
