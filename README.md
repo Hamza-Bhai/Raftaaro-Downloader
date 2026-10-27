@@ -20,7 +20,7 @@ Built with Electron and TypeScript.
 
 **Chrome extension**
 
-- A "⬇ Download" button on YouTube, Instagram and Facebook videos
+- A "⬇ Download" button on YouTube videos and Shorts, Instagram and Facebook videos
 - Right-click any link → "Download with Raftaaro"
 - Can pass your YouTube, Instagram and Facebook login to the app, so videos that need a login work and YouTube does not treat you as a bot
 
@@ -31,16 +31,32 @@ Built with Electron and TypeScript.
 - Keeps running in the tray while downloads are active
 - Updates yt-dlp by itself
 
-## Install
+## Download and install (no coding needed)
 
-Download the latest `Raftaaro Setup x.y.z.exe` from [Releases](https://github.com/Hamza-Bhai/Raftaaro-Downloader/releases) and run it.
+[**⬇ Download the latest version**](https://github.com/Hamza-Bhai/Raftaaro-Downloader/releases/latest)
 
-### Chrome extension
+Works on Windows 10 and 11 (64-bit).
 
-1. Open `chrome://extensions` and turn on **Developer mode**.
-2. Click **Load unpacked** and choose the `extension` folder (in the install folder under `resources\extension`, or in this repository).
-3. In Raftaaro, open **Settings** and copy the **Chrome extension token**.
-4. Click the Raftaaro icon in Chrome, paste the token, then **Save** and **Test connection**.
+1. Open the link above. Under **Assets**, click **`Raftaaro-Setup-x.y.z.exe`** to download it (about 220 MB, because the video tools are included).
+2. Run the downloaded file.
+3. Windows may show **"Windows protected your PC"**, because the app is new and not signed with a paid certificate. Click **More info**, then **Run anyway**.
+4. Choose where to install, then finish. Raftaaro opens from the desktop shortcut or the Start menu.
+
+Paste any link into the box at the top and press **Download**. That is all you need; the Chrome extension below is optional.
+
+### Chrome extension (optional)
+
+The extension adds a **⬇ Download** button on YouTube, Instagram and Facebook videos and a right-click menu for links.
+
+1. From the same release page, download **`Raftaaro-Chrome-Extension-x.y.z.zip`** and unzip it into a folder you will keep (for example `Documents\Raftaaro Extension`). The extension is also in the install folder, under `resources\extension`.
+2. In Chrome, open `chrome://extensions` and turn on **Developer mode** (top right).
+3. Click **Load unpacked** and choose that folder.
+4. In Raftaaro, open **Settings** and copy the **Chrome extension token**.
+5. Click the Raftaaro icon in Chrome's toolbar (pin it from the puzzle-piece menu), paste the token, then click **Save** and **Test connection**.
+
+### Updating
+
+Download and run the newer installer; your settings and download list are kept.
 
 ## Build from source
 
