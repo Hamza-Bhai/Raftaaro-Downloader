@@ -1,5 +1,11 @@
 # Raftaaro
 
+[![CI](https://github.com/Hamza-Bhai/Raftaaro-Downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/Hamza-Bhai/Raftaaro-Downloader/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/Hamza-Bhai/Raftaaro-Downloader)](https://github.com/Hamza-Bhai/Raftaaro-Downloader/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Hamza-Bhai/Raftaaro-Downloader/total)](https://github.com/Hamza-Bhai/Raftaaro-Downloader/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6)](#download-and-install-no-coding-needed)
+[![License: MIT](https://img.shields.io/github/license/Hamza-Bhai/Raftaaro-Downloader)](LICENSE)
+
 A free, open-source download manager for Windows. It downloads ordinary files over several connections at once, and videos and audio from YouTube, Instagram, Facebook and other sites through [yt-dlp](https://github.com/yt-dlp/yt-dlp). A Chrome extension sends links to the app in one click.
 
 Built with Electron and TypeScript.
