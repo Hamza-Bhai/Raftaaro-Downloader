@@ -39,15 +39,15 @@
     "@electron-toolkit/eslint-config-ts": "^4.0.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@types/node": "^24.19.2",
-    "electron": "^45.2.1",
+    "electron": "^45.2.3",
     "electron-builder": "^26.15.3",
     "electron-vite": "^6.0.0",
     "eslint": "^10.14.0",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "prettier": "^3.9.10",
     "typescript": "^5.9.3",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
   },
   "productName": "Raftaaro"
 }
